@@ -1,0 +1,32 @@
+MUST Haves (The Non-Negotiables)
+
+These are the core features required for the app to function. Without these, the app does not solve the primary problem.
+
+    Group & Partner Creation: Users need the ability to create distinct groups (e.g., "Paris Trip 2026," "Apartment 4B") or 1-on-1 connections (for couples) to keep different pools of expenses separate.
+
+    Simple Expense Entry: Adding an expense must be frictionless. It requires: Amount, Description/Title, Date, "Who paid?", and "Who is it split with?".
+
+    Clear Balance Calculation: A real-time, easy-to-read dashboard showing exactly who owes whom. It should boil down complex group math into simple statements (e.g., "Alex owes Jamie $45").
+
+    Basic Equal Splitting: The ability to split a bill evenly down the middle or equally among all selected group members.
+
+    Settle Up Functionality: A way to manually record that a debt has been paid off (e.g., recording a cash exchange or a bank transfer made outside the app) to reset balances to zero.
+
+    Cloud Syncing & User Accounts: Data must sync in real-time across devices so all members see the same up-to-date balances.
+
+
+SHOULD Haves (High-Value Features)
+
+These features aren't strictly required for an MVP (Minimum Viable Product), but users will likely complain or switch to competitors if they are missing.
+
+    Custom Splitting Methods: Not everything is a 50/50 split. Users need options to split by exact amounts, percentages, or shares (e.g., someone had more drinks at dinner).
+
+    Debt Simplification: An algorithm that minimizes the number of transactions needed to settle up. (If A owes B $10, and B owes C $10, the app should just tell A to pay C $10).
+
+    Expense Categorization: Tagging expenses (Groceries, Utilities, Travel, Dining) so users can see where their shared money is going.
+
+    Multi-Currency Support: Essential for group travel. The app should allow users to enter an expense in a foreign currency and automatically convert it to the group's default currency based on current exchange rates.
+
+    Push Notifications: Alerts for when a user is added to a group, an expense is added involving them, or a payment is settled.
+
+    Recurring Expenses: The ability to set up automatic weekly or monthly additions for things like rent, internet, or streaming subscriptions.
