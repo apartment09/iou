@@ -97,6 +97,25 @@ export function groupRoutes(deps: Deps): Router {
     res.status(201).json(categoryRepo.create(req.group!.id, input.name, input.icon));
   });
 
+  const ownCategory = (req: { params: Record<string, unknown>; group?: { id: number } }) => {
+    const category = categoryRepo.findById(Number(req.params.categoryId));
+    if (!category || category.groupId !== req.group!.id) throw notFound('Category not found');
+    return category;
+  };
+
+  group.patch('/categories/:categoryId', validate(createCategorySchema), (req, res) => {
+    const category = ownCategory(req);
+    const input = req.body as CreateCategoryInput;
+    categoryRepo.update(category.id, input.name, input.icon);
+    res.json({ ...category, name: input.name, icon: input.icon });
+  });
+
+  // Expenses using the category fall back to "Default" (FK sets NULL).
+  group.delete('/categories/:categoryId', (req, res) => {
+    categoryRepo.delete(ownCategory(req).id);
+    res.status(204).end();
+  });
+
   group.get('/expenses', (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 100, 200);
     const offset = Math.max(Number(req.query.offset) || 0, 0);

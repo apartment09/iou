@@ -105,7 +105,7 @@ export class ExpenseService {
     const categoryId = input.categoryId ?? null;
     if (categoryId !== null) {
       const category = this.categories.findById(categoryId);
-      if (!category || (category.groupId !== null && category.groupId !== group.id)) {
+      if (!category || category.groupId !== group.id) {
         throw badRequest('Unknown category');
       }
     }

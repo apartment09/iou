@@ -431,11 +431,55 @@ describe('expenses, balances, settle up', () => {
     expect(flat.memberCount).toBe(3);
   });
 
-  it('supports custom categories per group', async () => {
-    const created = await post(kai, `/api/groups/${groupId}/categories`, { name: 'Plants', icon: '🪴' });
-    expect(created.status).toBe(201);
+  it('categories are per-group, editable and removable; deletion falls back to Default', async () => {
+    // Every group starts with its own editable copy of the default set.
     const list = await anna.get(`/api/groups/${groupId}/categories`);
-    expect(list.body.some((c: { name: string }) => c.name === 'Plants')).toBe(true);
-    expect(list.body.some((c: { name: string }) => c.name === 'Groceries')).toBe(true);
+    expect(list.body).toHaveLength(7);
+    const groceries = list.body.find((c: { name: string }) => c.name === 'Groceries');
+    expect(groceries.groupId).toBe(groupId);
+    expect(groceries.icon).toBe('shopping-cart');
+
+    // Any member can create and rename categories.
+    const created = await post(kai, `/api/groups/${groupId}/categories`, { name: 'Plants', icon: 'leaf' });
+    expect(created.status).toBe(201);
+    const renamed = await anna
+      .patch(`/api/groups/${groupId}/categories/${created.body.id}`)
+      .set('X-Requested-With', 'fetch')
+      .send({ name: 'Garden', icon: 'flower' });
+    expect(renamed.status).toBe(200);
+    expect(renamed.body).toMatchObject({ name: 'Garden', icon: 'flower' });
+
+    // An expense using a category falls back to Default (null) on deletion.
+    const expense = await post(kai, `/api/groups/${groupId}/expenses`, {
+      title: 'Tulips',
+      amountCents: 500,
+      date: '2026-06-10',
+      paidBy: kaiId,
+      categoryId: created.body.id,
+      split: { method: 'equal', participants: [kaiId] },
+    });
+    expect(expense.body.categoryId).toBe(created.body.id);
+    expect((await del(kai, `/api/groups/${groupId}/categories/${created.body.id}`)).status).toBe(204);
+    const after = await kai.get(`/api/groups/${groupId}/expenses/${expense.body.id}`);
+    expect(after.body.categoryId).toBeNull();
+
+    // Categories from other groups are rejected, in expenses and in edits.
+    const other = await createGroup(kai, 'Other Group');
+    const otherCategories = await kai.get(`/api/groups/${other.id}/categories`);
+    const foreign = otherCategories.body[0].id;
+    const crossUse = await post(kai, `/api/groups/${groupId}/expenses`, {
+      title: 'Sneaky',
+      amountCents: 100,
+      date: '2026-06-10',
+      paidBy: kaiId,
+      categoryId: foreign,
+      split: { method: 'equal', participants: [kaiId] },
+    });
+    expect(crossUse.status).toBe(400);
+    const crossEdit = await kai
+      .patch(`/api/groups/${groupId}/categories/${foreign}`)
+      .set('X-Requested-With', 'fetch')
+      .send({ name: 'Hijack', icon: 'tag' });
+    expect(crossEdit.status).toBe(404);
   });
 });

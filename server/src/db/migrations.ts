@@ -117,4 +117,33 @@ ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
 UPDATE users SET is_admin = 1 WHERE id = (SELECT MIN(id) FROM users);
 `,
   },
+  {
+    // Categories become fully per-group and editable: the shared built-in set
+    // (group_id NULL) is materialized into every group, expenses are remapped
+    // to their group-local copy, and icons switch from emoji to Lucide names.
+    id: '003_per_group_categories',
+    sql: `
+UPDATE categories SET icon = 'shopping-cart' WHERE group_id IS NULL AND name = 'Groceries';
+UPDATE categories SET icon = 'utensils'      WHERE group_id IS NULL AND name = 'Dining';
+UPDATE categories SET icon = 'bus'           WHERE group_id IS NULL AND name = 'Transport';
+UPDATE categories SET icon = 'house'         WHERE group_id IS NULL AND name = 'Home';
+UPDATE categories SET icon = 'plane'         WHERE group_id IS NULL AND name = 'Travel';
+UPDATE categories SET icon = 'clapperboard'  WHERE group_id IS NULL AND name = 'Entertainment';
+UPDATE categories SET icon = 'package'       WHERE group_id IS NULL AND name = 'Other';
+
+INSERT INTO categories (group_id, name, icon)
+SELECT g.id, c.name, c.icon
+FROM expense_groups g CROSS JOIN categories c
+WHERE c.group_id IS NULL;
+
+UPDATE expenses SET category_id = (
+  SELECT c2.id FROM categories c2
+  WHERE c2.group_id = expenses.group_id
+    AND c2.name = (SELECT c1.name FROM categories c1 WHERE c1.id = expenses.category_id)
+)
+WHERE category_id IN (SELECT id FROM categories WHERE group_id IS NULL);
+
+DELETE FROM categories WHERE group_id IS NULL;
+`,
+  },
 ];

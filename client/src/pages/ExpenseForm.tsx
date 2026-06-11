@@ -11,6 +11,7 @@ import {
   useUpdateExpense,
 } from '../api/hooks.js';
 import { Shell } from '../components/Layout.js';
+import { CategoryIcon } from '../components/CategoryIcon.js';
 import { SplitEditor } from '../components/SplitEditor.js';
 import { Button, Card, ErrorText, Field, Select, Spinner, TextInput } from '../components/ui.js';
 import { centsToInput, todayIso } from '../lib/format.js';
@@ -48,6 +49,33 @@ export function ExpenseFormPage({ mode }: { mode: 'new' | 'edit' }) {
       members={activeMembers}
       existing={mode === 'edit' ? existing.data : undefined}
     />
+  );
+}
+
+function CategoryChip({
+  icon,
+  label,
+  selected,
+  onClick,
+}: {
+  icon: string | null;
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+        selected
+          ? 'bg-emerald-600 text-white'
+          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+      }`}
+    >
+      <CategoryIcon name={icon} className="h-4 w-4" />
+      {label}
+    </button>
   );
 }
 
@@ -151,29 +179,35 @@ function ExpenseForm({
             <Field label="Date">
               <TextInput type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
-            <Field label="Category">
-              <Select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
-              >
-                <option value="">No category</option>
-                {categories?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.icon} {c.name}
+            <Field label="Paid by">
+              <Select value={paidBy} onChange={(e) => setPaidBy(Number(e.target.value))}>
+                {members.map((m) => (
+                  <option key={m.userId} value={m.userId}>
+                    {m.name}
+                    {m.userId === myId ? ' (you)' : ''}
                   </option>
                 ))}
               </Select>
             </Field>
           </div>
-          <Field label="Paid by">
-            <Select value={paidBy} onChange={(e) => setPaidBy(Number(e.target.value))}>
-              {members.map((m) => (
-                <option key={m.userId} value={m.userId}>
-                  {m.name}
-                  {m.userId === myId ? ' (you)' : ''}
-                </option>
+          <Field label="Category">
+            <div className="flex flex-wrap gap-1.5">
+              <CategoryChip
+                icon={null}
+                label="Default"
+                selected={categoryId === ''}
+                onClick={() => setCategoryId('')}
+              />
+              {categories?.map((c) => (
+                <CategoryChip
+                  key={c.id}
+                  icon={c.icon}
+                  label={c.name}
+                  selected={categoryId === c.id}
+                  onClick={() => setCategoryId(c.id)}
+                />
               ))}
-            </Select>
+            </div>
           </Field>
         </Card>
 

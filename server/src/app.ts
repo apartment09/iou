@@ -46,7 +46,7 @@ export function createApp(db: Db): App {
   const inviteService = new InviteService(inviteRepo, groupRepo, userRepo, activityRepo);
   const authService = new AuthService(userRepo, sessionRepo);
   const balanceService = new BalanceService(expenseRepo, groupRepo);
-  const groupService = new GroupService(db, groupRepo, expenseRepo, activityRepo, userRepo, balanceService);
+  const groupService = new GroupService(db, groupRepo, expenseRepo, activityRepo, userRepo, categoryRepo, balanceService);
   const expenseService = new ExpenseService(db, expenseRepo, groupRepo, categoryRepo, activityRepo);
 
   const app = express();

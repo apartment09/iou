@@ -190,6 +190,17 @@ export const useCreateCategory = (groupId: number) =>
     post<CategoryDto>(`/groups/${groupId}/categories`, input),
   );
 
+export const useUpdateCategory = (groupId: number) =>
+  useGroupMutation((input: { id: number; name: string; icon: string }) =>
+    patch<CategoryDto>(`/groups/${groupId}/categories/${input.id}`, {
+      name: input.name,
+      icon: input.icon,
+    }),
+  );
+
+export const useDeleteCategory = (groupId: number) =>
+  useGroupMutation((categoryId: number) => del(`/groups/${groupId}/categories/${categoryId}`));
+
 // ---- invites ----
 
 export interface CreatedInvite {

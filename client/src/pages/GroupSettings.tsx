@@ -1,18 +1,23 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Pencil, Trash2 } from 'lucide-react';
 import {
   useAddMember,
   useAllUsers,
   useArchiveGroup,
+  useCategories,
   useCreateCategory,
   useCreateInvite,
+  useDeleteCategory,
   useGroup,
   useLeaveGroup,
   useMe,
   useRemoveMember,
   useRenameGroup,
+  useUpdateCategory,
 } from '../api/hooks.js';
 import { Shell } from '../components/Layout.js';
+import { CategoryIcon, IconPicker } from '../components/CategoryIcon.js';
 import { Avatar, Button, Card, ErrorText, Field, Select, Spinner, TextInput } from '../components/ui.js';
 
 export function GroupSettingsPage() {
@@ -28,14 +33,11 @@ export function GroupSettingsPage() {
   const removeMember = useRemoveMember(groupId);
   const { data: allUsers } = useAllUsers();
   const createInvite = useCreateInvite();
-  const createCategory = useCreateCategory(groupId);
 
   const [name, setName] = useState<string | null>(null);
   const [userToAdd, setUserToAdd] = useState<number | ''>('');
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [categoryName, setCategoryName] = useState('');
-  const [categoryIcon, setCategoryIcon] = useState('');
 
   if (!group || !me) {
     return (
@@ -71,15 +73,6 @@ export function GroupSettingsPage() {
     if (!inviteUrl) return;
     await navigator.clipboard.writeText(inviteUrl);
     setCopied(true);
-  };
-
-  const addCategory = (e: FormEvent) => {
-    e.preventDefault();
-    if (!categoryName.trim()) return;
-    createCategory.mutate(
-      { name: categoryName.trim(), icon: categoryIcon.trim() || '🏷️' },
-      { onSuccess: () => { setCategoryName(''); setCategoryIcon(''); } },
-    );
   };
 
   return (
@@ -206,30 +199,7 @@ export function GroupSettingsPage() {
           )}
         </Card>
 
-        {!archived && (
-          <Card>
-            <h2 className="mb-3 text-sm font-semibold text-slate-600">Add a category</h2>
-            <form onSubmit={addCategory} className="flex gap-2">
-              <TextInput
-                placeholder="Icon"
-                maxLength={4}
-                value={categoryIcon}
-                onChange={(e) => setCategoryIcon(e.target.value)}
-                className="w-16 rounded-xl border border-slate-300 bg-white px-2 py-2.5 text-center outline-none focus:border-emerald-500"
-              />
-              <TextInput
-                placeholder="Name"
-                maxLength={40}
-                value={categoryName}
-                onChange={(e) => setCategoryName(e.target.value)}
-              />
-              <Button type="submit" variant="secondary" disabled={createCategory.isPending}>
-                Add
-              </Button>
-            </form>
-            <ErrorText>{createCategory.error?.message}</ErrorText>
-          </Card>
-        )}
+        {!archived && <CategoriesCard groupId={groupId} />}
 
         <Card>
           <h2 className="mb-3 text-sm font-semibold text-red-600">Danger zone</h2>
@@ -271,5 +241,104 @@ export function GroupSettingsPage() {
         </Card>
       </div>
     </Shell>
+  );
+}
+
+function CategoriesCard({ groupId }: { groupId: number }) {
+  const { data: categories } = useCategories(groupId);
+  const create = useCreateCategory(groupId);
+  const update = useUpdateCategory(groupId);
+  const remove = useDeleteCategory(groupId);
+
+  // editingId null = closed form, 0 = creating new, >0 = editing that category
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formName, setFormName] = useState('');
+  const [formIcon, setFormIcon] = useState('tag');
+
+  const openFor = (id: number, name: string, icon: string) => {
+    setEditingId(id);
+    setFormName(name);
+    setFormIcon(icon);
+  };
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!formName.trim() || editingId === null) return;
+    const close = { onSuccess: () => setEditingId(null) };
+    if (editingId === 0) create.mutate({ name: formName.trim(), icon: formIcon }, close);
+    else update.mutate({ id: editingId, name: formName.trim(), icon: formIcon }, close);
+  };
+
+  const deleteCategory = (id: number, name: string) => {
+    if (window.confirm(`Delete "${name}"? Expenses using it keep their data and show as "Default".`)) {
+      if (editingId === id) setEditingId(null);
+      remove.mutate(id);
+    }
+  };
+
+  return (
+    <Card>
+      <h2 className="mb-3 text-sm font-semibold text-slate-600">Categories</h2>
+      <ul className="divide-y divide-slate-100">
+        {categories?.map((category) => (
+          <li key={category.id} className="flex items-center gap-3 py-2">
+            <span className="text-slate-500">
+              <CategoryIcon name={category.icon} />
+            </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">{category.name}</span>
+            <button
+              type="button"
+              aria-label={`Edit ${category.name}`}
+              onClick={() => openFor(category.id, category.name, category.icon)}
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            >
+              <Pencil className="h-4 w-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              aria-label={`Delete ${category.name}`}
+              onClick={() => deleteCategory(category.id, category.name)}
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <ErrorText>{remove.error?.message}</ErrorText>
+
+      {editingId === null ? (
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-3 w-full"
+          onClick={() => openFor(0, '', 'tag')}
+        >
+          + New category
+        </Button>
+      ) : (
+        <form onSubmit={submit} className="mt-3 space-y-3 rounded-xl bg-slate-50 p-3">
+          <Field label={editingId === 0 ? 'New category' : 'Edit category'}>
+            <TextInput
+              required
+              maxLength={40}
+              placeholder="Name"
+              value={formName}
+              onChange={(e) => setFormName(e.target.value)}
+            />
+          </Field>
+          <IconPicker value={formIcon} onChange={setFormIcon} />
+          <ErrorText>{create.error?.message ?? update.error?.message}</ErrorText>
+          <div className="flex gap-2">
+            <Button type="submit" className="flex-1" disabled={create.isPending || update.isPending}>
+              {editingId === 0 ? 'Add' : 'Save'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setEditingId(null)}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      )}
+    </Card>
   );
 }

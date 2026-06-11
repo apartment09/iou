@@ -90,7 +90,8 @@ export const settlementSchema = z
 
 export const createCategorySchema = z.object({
   name: z.string().trim().min(1).max(40),
-  icon: z.string().min(1).max(8),
+  // Lucide icon name, e.g. "shopping-cart"
+  icon: z.string().regex(/^[a-z0-9-]{1,40}$/, 'Invalid icon name'),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

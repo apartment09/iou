@@ -9,6 +9,7 @@ import {
   useMe,
 } from '../api/hooks.js';
 import { Fab, Shell } from '../components/Layout.js';
+import { CategoryIcon } from '../components/CategoryIcon.js';
 import { Avatar, Card, EmptyState, Money, Spinner } from '../components/ui.js';
 import { formatDay, formatTimestamp, memberName, money, myImpact } from '../lib/format.js';
 
@@ -132,12 +133,16 @@ function ExpenseRow({
 }) {
   const impact = myImpact(expense, myId);
   const isSettlement = expense.type === 'settlement';
-  const icon = isSettlement ? '🤝' : (categories.find((c) => c.id === expense.categoryId)?.icon ?? '🧾');
+  const iconName = isSettlement
+    ? 'handshake'
+    : (categories.find((c) => c.id === expense.categoryId)?.icon ?? null);
   const payer = memberName(group.members, expense.paidBy);
 
   const body = (
     <div className="flex items-center gap-3 px-4 py-3">
-      <span className="text-2xl">{icon}</span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+        <CategoryIcon name={iconName} />
+      </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">
           {isSettlement

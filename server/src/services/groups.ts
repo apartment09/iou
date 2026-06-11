@@ -6,6 +6,7 @@ import type { GroupRepository, GroupRow } from '../repositories/groups.js';
 import type { ExpenseRepository } from '../repositories/expenses.js';
 import type { ActivityRepository } from '../repositories/activity.js';
 import type { UserRepository } from '../repositories/users.js';
+import type { CategoryRepository } from '../repositories/categories.js';
 import type { BalanceService } from './balances.js';
 
 export class GroupService {
@@ -15,6 +16,7 @@ export class GroupService {
     private readonly expenses: ExpenseRepository,
     private readonly activity: ActivityRepository,
     private readonly users: UserRepository,
+    private readonly categories: CategoryRepository,
     private readonly balances: BalanceService,
   ) {}
 
@@ -35,6 +37,7 @@ export class GroupService {
     const id = this.db.transaction(() => {
       const groupId = this.groups.create(name, actor.id, now);
       this.groups.addMember(groupId, actor.id, 'owner', now);
+      this.categories.seedDefaults(groupId);
       this.activity.add(groupId, actor.id, 'group_created', null, { name }, now);
       return groupId;
     })();
