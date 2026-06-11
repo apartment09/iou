@@ -12,7 +12,7 @@ import {
   type GroupNameInput,
   type RecurringExpenseInput,
   type SettlementInput,
-} from '@splitt/shared';
+} from '@iou/shared';
 import { badRequest, notFound } from '../errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth, requireMembership } from '../middleware/auth.js';

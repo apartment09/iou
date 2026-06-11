@@ -50,7 +50,7 @@ function Rail() {
     <nav className="fixed inset-y-0 left-0 z-20 hidden w-16 flex-col border-r border-edge bg-surface md:flex lg:w-60">
       <Link to="/" className="flex h-13 items-center gap-2 border-b border-edge px-4">
         <span className="text-lg" aria-hidden>💸</span>
-        <span className="hidden text-[15px] font-bold tracking-tight lg:block">Splitt</span>
+        <span className="hidden text-[15px] font-bold tracking-tight lg:block">IOU</span>
       </Link>
 
       <div className="flex-1 overflow-y-auto p-2">

@@ -1,4 +1,4 @@
-import type { InvitePreviewDto, UserDto } from '@splitt/shared';
+import type { InvitePreviewDto, UserDto } from '@iou/shared';
 import { badRequest, notFound } from '../errors.js';
 import { isoInDays, newToken, nowIso } from '../util.js';
 import type { InviteRepository, InviteRow } from '../repositories/invites.js';

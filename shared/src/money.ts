@@ -1,4 +1,4 @@
-/** All money in Splitt is integer cents. This module is the only place that
+/** All money in IOU is integer cents. This module is the only place that
  * converts between cents and human-readable representations. */
 
 export function assertCents(value: number, what = 'amount'): void {

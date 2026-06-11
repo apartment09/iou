@@ -6,7 +6,7 @@ import {
   type ExpenseInput,
   type SettlementInput,
   type UserDto,
-} from '@splitt/shared';
+} from '@iou/shared';
 import type { Db } from '../db/connection.js';
 import { badRequest, conflict, notFound } from '../errors.js';
 import { nowIso } from '../util.js';

@@ -1,4 +1,4 @@
-import type { ActivityDto } from '@splitt/shared';
+import type { ActivityDto } from '@iou/shared';
 import type { Db } from '../db/connection.js';
 
 export class ActivityRepository {

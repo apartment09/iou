@@ -1,4 +1,4 @@
-import type { GroupRole, MemberDto } from '@splitt/shared';
+import type { GroupRole, MemberDto } from '@iou/shared';
 import type { Db } from '../db/connection.js';
 
 export interface GroupRow {

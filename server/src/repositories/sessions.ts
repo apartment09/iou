@@ -1,4 +1,4 @@
-import type { UserDto } from '@splitt/shared';
+import type { UserDto } from '@iou/shared';
 import type { Db } from '../db/connection.js';
 
 export class SessionRepository {

@@ -1,4 +1,4 @@
-# Splitt — Shared Expense Tracker
+# IOU — Shared Expense Tracker
 
 Splitwise-style multi-user expense tracker. Users share groups (or keep solo
 ones), split expenses four ways (equal / exact / percentage / shares), see
@@ -58,7 +58,7 @@ After editing `shared/`, rebuild it (`npm run build -w shared`) — server and
 client consume `shared/dist`, not the source.
 
 Dev login: first registered user needs no invite (setup mode). DB lives at
-`server/data/splitt.db` (override with `DB_PATH`); delete it to reset.
+`server/data/iou.db` (override with `DB_PATH`); delete it to reset.
 
 ## Domain invariants (tested — keep them true)
 
@@ -76,19 +76,19 @@ Dev login: first registered user needs no invite (setup mode). DB lives at
 
 ## Deploy (not yet performed — planned)
 
-Target: Hetzner server (178.104.73.139), pm2 app `splitt` on port **3001**,
-nginx vhost (suggested `expenses.kai-hagen.de`) serving `client/dist`
-statically and proxying `/api` to :3001, TLS via Let's Encrypt — same pattern
-as Recall. Server needs `NODE_ENV=production` (secure cookies). First deploy:
+Target: Hetzner server (178.104.73.139), pm2 app `iou` on port **3001**,
+nginx vhost `iou.kai-hagen.de` serving `client/dist` statically and proxying
+`/api` to :3001, TLS via Let's Encrypt — same pattern as Recall. Server needs
+`NODE_ENV=production` (secure cookies). First deploy:
 
 ```bash
 # server
-cd /root && git clone <repo> expense-tracker && cd expense-tracker
+cd /root && git clone <repo> iou && cd iou
 npm install && npm run build
-NODE_ENV=production pm2 start server/dist/index.js --name splitt
+cd server && NODE_ENV=production pm2 start dist/index.js --name iou && cd ..
 pm2 save
 ```
 
-Subsequent deploys: `git pull && npm install && npm run build && pm2 restart splitt`.
-Back up `server/data/splitt.db` (nightly `sqlite3 .backup` cron recommended,
+Subsequent deploys: `git pull && npm install && npm run build && pm2 restart iou`.
+Back up `server/data/iou.db` (nightly `sqlite3 .backup` cron recommended,
 ideally together with Recall's DB).

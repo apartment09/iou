@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler } from 'express';
-import { SplitError } from '@splitt/shared';
+import { SplitError } from '@iou/shared';
 import { AppError } from '../errors.js';
 
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {

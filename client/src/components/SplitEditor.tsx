@@ -7,7 +7,7 @@ import {
   type Share,
   type SplitInput,
   type SplitMethod,
-} from '@splitt/shared';
+} from '@iou/shared';
 import { Avatar, Money } from './ui.js';
 import { centsToInput, money } from '../lib/format.js';
 

@@ -1,4 +1,4 @@
-import type { CategoryDto } from '@splitt/shared';
+import type { CategoryDto } from '@iou/shared';
 import type { Db } from '../db/connection.js';
 
 /** Every new group starts with these (Lucide icon names). Fully editable

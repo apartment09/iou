@@ -1,6 +1,6 @@
 import { useState, useSyncExternalStore } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import type { ActivityDto, BalancesDto, CategoryDto, ExpenseDto, GroupDetailDto } from '@splitt/shared';
+import type { ActivityDto, BalancesDto, CategoryDto, ExpenseDto, GroupDetailDto } from '@iou/shared';
 import {
   useActivity,
   useBalances,

@@ -7,7 +7,7 @@ import {
   type ChangePasswordInput,
   type LoginInput,
   type RegisterInput,
-} from '@splitt/shared';
+} from '@iou/shared';
 import { config } from '../config.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';

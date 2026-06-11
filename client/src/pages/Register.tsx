@@ -12,7 +12,7 @@ export function RegisterPage() {
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4">
       <div className="mb-8 text-center">
         <div className="text-5xl">💸</div>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Splitt</h1>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">IOU</h1>
       </div>
       {status?.needsSetup ? (
         <SetupForm />

@@ -1,4 +1,4 @@
-import { computeNetBalances, simplifyDebts, type BalancesDto } from '@splitt/shared';
+import { computeNetBalances, simplifyDebts, type BalancesDto } from '@iou/shared';
 import type { ExpenseRepository } from '../repositories/expenses.js';
 import type { GroupRepository } from '../repositories/groups.js';
 

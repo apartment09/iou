@@ -21,7 +21,7 @@ export function LoginPage() {
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-4">
       <div className="mb-8 text-center">
         <div className="text-5xl">💸</div>
-        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Splitt</h1>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">IOU</h1>
         <p className="mt-1 text-sm text-muted">Shared expenses, settled simply.</p>
       </div>
       <Card>

@@ -14,7 +14,7 @@ const LAYOUTS: Record<LayoutId, ComponentType<ShellProps>> = {
   rail: RailShell,
 };
 
-const LAYOUT_KEY = 'splitt-layout';
+const LAYOUT_KEY = 'iou-layout';
 
 export function getLayoutPref(): LayoutId {
   const stored = localStorage.getItem(LAYOUT_KEY);

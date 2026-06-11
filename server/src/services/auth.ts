@@ -1,4 +1,4 @@
-import type { CreateUserInput, RegisterInput, UserDto } from '@splitt/shared';
+import type { CreateUserInput, RegisterInput, UserDto } from '@iou/shared';
 import { conflict, forbidden, notFound, unauthorized } from '../errors.js';
 import { hashToken, isoInDays, newToken, nowIso } from '../util.js';
 import type { SessionRepository } from '../repositories/sessions.js';

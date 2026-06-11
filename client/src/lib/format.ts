@@ -1,4 +1,4 @@
-import { formatCents, type ExpenseDto } from '@splitt/shared';
+import { formatCents, type ExpenseDto } from '@iou/shared';
 
 export const money = (cents: number) => formatCents(cents);
 

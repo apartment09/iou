@@ -15,5 +15,5 @@ tickRecurring();
 setInterval(tickRecurring, 60 * 60 * 1000).unref();
 
 app.express.listen(config.port, () => {
-  console.log(`Splitt server listening on http://localhost:${config.port} (db: ${config.dbPath})`);
+  console.log(`IOU server listening on http://localhost:${config.port} (db: ${config.dbPath})`);
 });

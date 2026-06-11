@@ -1,5 +1,5 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import type { UserDto } from '@splitt/shared';
+import type { UserDto } from '@iou/shared';
 import { notFound, unauthorized } from '../errors.js';
 import type { AuthService } from '../services/auth.js';
 import type { GroupRepository, GroupRow, MemberRow } from '../repositories/groups.js';

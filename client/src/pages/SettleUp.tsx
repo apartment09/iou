@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { parseAmount, type ExpenseDto, type MemberDto } from '@splitt/shared';
+import { parseAmount, type ExpenseDto, type MemberDto } from '@iou/shared';
 import {
   useCreateSettlement,
   useDeleteExpense,

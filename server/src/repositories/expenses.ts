@@ -1,4 +1,4 @@
-import type { ExpenseDto, ExpenseType, Share, SplitInput, SplitMethod, TransactionLike } from '@splitt/shared';
+import type { ExpenseDto, ExpenseType, Share, SplitInput, SplitMethod, TransactionLike } from '@iou/shared';
 import type { Db } from '../db/connection.js';
 
 interface ExpenseRowRaw {

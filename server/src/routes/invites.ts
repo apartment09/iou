@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createInviteSchema, type CreateInviteInput } from '@splitt/shared';
+import { createInviteSchema, type CreateInviteInput } from '@iou/shared';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
 import type { AuthService } from '../services/auth.js';

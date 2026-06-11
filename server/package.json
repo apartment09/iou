@@ -1,5 +1,5 @@
 {
-  "name": "@splitt/server",
+  "name": "@iou/server",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@splitt/shared": "*",
+    "@iou/shared": "*",
     "better-sqlite3": "^12.10.0",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",

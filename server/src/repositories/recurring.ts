@@ -1,4 +1,4 @@
-import type { RecurringExpenseDto, SplitInput, SplitMethod } from '@splitt/shared';
+import type { RecurringExpenseDto, SplitInput, SplitMethod } from '@iou/shared';
 import type { Db } from '../db/connection.js';
 
 export interface RecurringRow {

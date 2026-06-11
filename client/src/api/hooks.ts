@@ -14,7 +14,7 @@ import type {
   RecurringExpenseInput,
   SettlementInput,
   UserDto,
-} from '@splitt/shared';
+} from '@iou/shared';
 import { ApiError, del, get, patch, post, put } from './client.js';
 
 // ---- auth ----

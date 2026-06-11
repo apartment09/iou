@@ -5,7 +5,7 @@ import {
   type RecurringExpenseDto,
   type RecurringExpenseInput,
   type UserDto,
-} from '@splitt/shared';
+} from '@iou/shared';
 import { badRequest, conflict, notFound } from '../errors.js';
 import { nowIso } from '../util.js';
 import type { RecurringRepository, RecurringRow } from '../repositories/recurring.js';

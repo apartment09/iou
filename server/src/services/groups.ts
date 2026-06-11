@@ -1,4 +1,4 @@
-import type { GroupDetailDto, GroupSummaryDto, UserDto } from '@splitt/shared';
+import type { GroupDetailDto, GroupSummaryDto, UserDto } from '@iou/shared';
 import type { Db } from '../db/connection.js';
 import { conflict, forbidden, notFound } from '../errors.js';
 import { nowIso } from '../util.js';

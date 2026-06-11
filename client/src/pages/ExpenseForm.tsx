@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { parseAmount, resolveSplit, type ExpenseInput, type SplitInput } from '@splitt/shared';
+import { parseAmount, resolveSplit, type ExpenseInput, type SplitInput } from '@iou/shared';
 import {
   useCategories,
   useCreateExpense,

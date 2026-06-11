@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { parseAmount, resolveSplit, type RecurringExpenseInput, type SplitInput } from '@splitt/shared';
+import { parseAmount, resolveSplit, type RecurringExpenseInput, type SplitInput } from '@iou/shared';
 import { useCategories, useCreateRecurring, useGroup, useMe } from '../api/hooks.js';
 import { Shell } from '../components/Layout.js';
 import { CategoryIcon } from '../components/CategoryIcon.js';
