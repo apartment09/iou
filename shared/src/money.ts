@@ -7,7 +7,7 @@ export function assertCents(value: number, what = 'amount'): void {
   }
 }
 
-export function formatCents(cents: number, currency = 'EUR', locale = 'de-DE'): string {
+export function formatCents(cents: number, currency = 'EUR', locale = 'en-GB'): string {
   return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(cents / 100);
 }
 

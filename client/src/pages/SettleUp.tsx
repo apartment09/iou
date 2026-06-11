@@ -84,7 +84,7 @@ function SettleForm({
     e.preventDefault();
     const amountCents = parseAmount(amountText);
     if (amountCents === null || amountCents <= 0) {
-      setFormError('Please enter a valid amount, e.g. 12,40');
+      setFormError('Please enter a valid amount, e.g. 12.40');
       return;
     }
     if (payer === recipient) {
@@ -137,7 +137,7 @@ function SettleForm({
             <Field label="Amount (€)">
               <TextInput
                 inputMode="decimal"
-                placeholder="0,00"
+                placeholder="0.00"
                 required
                 value={amountText}
                 onChange={(e) => setAmountText(e.target.value)}

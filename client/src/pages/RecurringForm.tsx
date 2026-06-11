@@ -49,7 +49,7 @@ export function RecurringFormPage() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (amountCents === null || amountCents <= 0) {
-      setFormError('Please enter a valid amount, e.g. 12,40');
+      setFormError('Please enter a valid amount, e.g. 12.40');
       return;
     }
     if (!splitValid) {
@@ -78,7 +78,7 @@ export function RecurringFormPage() {
           <Field label="Amount (€)">
             <input
               inputMode="decimal"
-              placeholder="0,00"
+              placeholder="0.00"
               required
               autoFocus
               value={amountText}

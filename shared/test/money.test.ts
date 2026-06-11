@@ -24,9 +24,9 @@ describe('parseAmount', () => {
 });
 
 describe('formatCents', () => {
-  it('formats German EUR', () => {
-    expect(formatCents(1240)).toContain('12,40');
+  it('formats EUR in English notation', () => {
+    expect(formatCents(1240)).toContain('12.40');
     expect(formatCents(1240)).toContain('€');
-    expect(formatCents(123456)).toContain('1.234,56');
+    expect(formatCents(123456)).toContain('1,234.56');
   });
 });

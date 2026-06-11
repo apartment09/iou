@@ -305,7 +305,7 @@ const shiftMonth = (month: string, delta: number) => {
 };
 
 const monthLabel = (month: string) =>
-  new Date(`${month}-01T00:00:00`).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  new Date(`${month}-01T00:00:00`).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 
 function StatsTab({ groupId }: { groupId: number }) {
   const [month, setMonth] = useState(currentMonth);

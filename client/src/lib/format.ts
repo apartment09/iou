@@ -2,8 +2,8 @@ import { formatCents, type ExpenseDto } from '@iou/shared';
 
 export const money = (cents: number) => formatCents(cents);
 
-/** "12,40" for an input field, from cents. */
-export const centsToInput = (cents: number) => (cents / 100).toFixed(2).replace('.', ',');
+/** "12.40" for an input field, from cents (typing a comma still works). */
+export const centsToInput = (cents: number) => (cents / 100).toFixed(2);
 
 export const todayIso = () => {
   const d = new Date();
@@ -12,7 +12,7 @@ export const todayIso = () => {
 
 export function formatDay(isoDate: string): string {
   if (isoDate === todayIso()) return 'Today';
-  return new Date(`${isoDate}T00:00:00`).toLocaleDateString('de-DE', {
+  return new Date(`${isoDate}T00:00:00`).toLocaleDateString('en-GB', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',
@@ -20,7 +20,7 @@ export function formatDay(isoDate: string): string {
 }
 
 export function formatTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString('de-DE', {
+  return new Date(iso).toLocaleString('en-GB', {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',

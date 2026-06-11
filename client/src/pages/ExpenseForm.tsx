@@ -125,7 +125,7 @@ function ExpenseForm({
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (amountCents === null || amountCents <= 0) {
-      setFormError('Please enter a valid amount, e.g. 12,40');
+      setFormError('Please enter a valid amount, e.g. 12.40');
       return;
     }
     if (!splitValid) {
@@ -160,7 +160,7 @@ function ExpenseForm({
           <Field label="Amount (€)">
             <input
               inputMode="decimal"
-              placeholder="0,00"
+              placeholder="0.00"
               required
               autoFocus={mode === 'new'}
               value={amountText}

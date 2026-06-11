@@ -172,7 +172,7 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
               {method === 'exact' && (
                 <input
                   inputMode="decimal"
-                  placeholder="0,00"
+                  placeholder="0.00"
                   value={exact[member.userId] ?? ''}
                   onChange={(e) => setExactFor(member.userId, e.target.value)}
                   className="w-24 rounded-lg border border-edge px-2 py-1.5 text-right text-sm outline-none focus:border-accent"
@@ -226,7 +226,7 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
         </p>
       )}
       {method === 'percentage' && Math.abs(percentSum - 100) > 0.001 && (
-        <p className="mt-2 text-sm text-warn">{percentSum.toLocaleString('de-DE')}% of 100% assigned</p>
+        <p className="mt-2 text-sm text-warn">{percentSum.toLocaleString('en-GB')}% of 100% assigned</p>
       )}
       {preview.error && method !== 'exact' && method !== 'percentage' && (
         <p className="mt-2 text-sm text-warn">{preview.error}</p>
