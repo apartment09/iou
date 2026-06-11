@@ -52,7 +52,7 @@ export function GroupSettingsPage() {
 
   const makeInvite = () => {
     createInvite.mutate(
-      { kind: 'group', groupId },
+      { groupId },
       {
         onSuccess: (invite) => {
           setInviteUrl(`${window.location.origin}/invite/${invite.token}`);
@@ -135,7 +135,8 @@ export function GroupSettingsPage() {
               {inviteUrl ? (
                 <div>
                   <p className="mb-2 text-xs text-slate-500">
-                    Share this link — it works for new and existing accounts and expires in 14 days:
+                    Share this link — anyone with an account on this server can join. Expires in
+                    14 days:
                   </p>
                   <div className="flex gap-2">
                     <input

@@ -1,6 +1,13 @@
 import { Router, type Response } from 'express';
 import rateLimit from 'express-rate-limit';
-import { loginSchema, registerSchema, type LoginInput, type RegisterInput } from '@splitt/shared';
+import {
+  changePasswordSchema,
+  loginSchema,
+  registerSchema,
+  type ChangePasswordInput,
+  type LoginInput,
+  type RegisterInput,
+} from '@splitt/shared';
 import { config } from '../config.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth } from '../middleware/auth.js';
@@ -36,10 +43,16 @@ export function authRoutes(auth: AuthService): Router {
   });
 
   router.post('/login', authLimiter, validate(loginSchema), (req, res) => {
-    const { email, password } = req.body as LoginInput;
-    const session = auth.login(email, password);
+    const { username, password } = req.body as LoginInput;
+    const session = auth.login(username, password);
     setSessionCookie(res, session);
     res.json(session.user);
+  });
+
+  router.post('/password', requireAuth(auth), validate(changePasswordSchema), (req, res) => {
+    const { currentPassword, newPassword } = req.body as ChangePasswordInput;
+    auth.changePassword(req.user!, currentPassword, newPassword);
+    res.status(204).end();
   });
 
   router.post('/logout', requireAuth(auth), (req, res) => {

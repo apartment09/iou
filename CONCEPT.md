@@ -39,9 +39,11 @@ The original MUST/SHOULD list was good. These are the refinements:
    private app. A per-group activity feed ("Anna added 'Pizza' 12,40 €")
    covers most of the need; refetch-on-focus keeps balances current. Push can
    come later.
-8. **Invite-only accounts.** The server is on the public internet; open
-   registration means spam and abuse surface. Account creation happens via
-   invite links. Group membership also works via invite links.
+8. **Admin-managed accounts.** The server is on the public internet; open
+   registration means spam and abuse surface. The first registered user
+   becomes the admin and creates all other accounts (username + password —
+   no email collected at all). Group membership works via shareable invite
+   links for existing accounts.
 9. **Multi-currency-ready, EUR-only.** Every amount row stores a currency
    code; every group has a default currency. v1 hardcodes EUR everywhere in
    the UI. Adding currencies later is a feature, not a migration.
@@ -56,8 +58,8 @@ The original MUST/SHOULD list was good. These are the refinements:
 
 ### MUST — v1.0
 
-- **Accounts & auth** — invite-only registration, login with email + password
-  (argon2 hashing), httpOnly session cookies.
+- **Accounts & auth** — admin-created accounts, login with username + password
+  (scrypt hashing), httpOnly session cookies, self-service password change.
 - **Groups** — create, rename, archive; member management; invite links to
   join; solo groups (1 member) and couple groups (2 members) are just sizes.
 - **Expense entry** — amount, title, date, category, who paid, who's involved,

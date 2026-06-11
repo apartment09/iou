@@ -16,9 +16,13 @@ See `CONCEPT.md` (product decisions) and `PLAN.md` (architecture rationale).
 - **server/** — Express 5 + better-sqlite3. Layering is strict:
   `routes/` (HTTP only) → `services/` (rules only) → `repositories/` (SQL only),
   wired by hand in `src/app.ts`. Migrations are TS-embedded SQL strings in
-  `src/db/migrations.ts` (append-only). Auth: scrypt password hashes, hashed
-  session tokens in httpOnly cookies, invite-only registration (first user
-  exempt), `X-Requested-With` header required on all mutations.
+  `src/db/migrations.ts` (append-only). Auth: username + password (no email
+  anywhere), scrypt hashes, hashed session tokens in httpOnly cookies,
+  `X-Requested-With` header required on all mutations. Accounts are
+  admin-managed: the first user self-registers and becomes admin; the admin
+  creates all other accounts via `/api/admin/users` (UI: "Users" page); users
+  change their own password under "Account". Group invite links only let
+  existing accounts join groups.
 - **client/** — Vite + React 19 + Tailwind 4 + TanStack Query. Mobile-first.
   All server state via query hooks in `src/api/hooks.ts`; every group mutation
   invalidates the `['groups']` subtree.

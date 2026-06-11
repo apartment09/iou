@@ -6,8 +6,9 @@ import type { Transfer } from './settlement.js';
 
 export interface UserDto {
   id: number;
-  email: string;
+  username: string;
   name: string;
+  isAdmin: boolean;
 }
 
 export type GroupRole = 'owner' | 'member';
@@ -82,9 +83,8 @@ export interface ActivityDto {
 }
 
 export interface InvitePreviewDto {
-  kind: 'account' | 'group';
-  groupId: number | null;
-  groupName: string | null;
+  groupId: number;
+  groupName: string;
   inviterName: string;
 }
 

@@ -53,8 +53,15 @@ export function HomeHeaderActions() {
   const navigate = useNavigate();
   const { data: user } = useMe();
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-slate-500">{user?.name}</span>
+    <div className="flex items-center gap-1">
+      {user?.isAdmin && (
+        <Link to="/admin/users" className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-200">
+          Users
+        </Link>
+      )}
+      <Link to="/account" className="rounded-lg px-2 py-1 text-sm font-medium text-slate-600 hover:bg-slate-200">
+        {user?.name}
+      </Link>
       <button
         className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-200"
         onClick={() => logout.mutate(undefined, { onSuccess: () => navigate('/login') })}

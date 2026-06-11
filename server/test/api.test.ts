@@ -19,24 +19,21 @@ const put = (a: Agent, url: string, body: object) =>
   a.put(url).set('X-Requested-With', 'fetch').send(body);
 const del = (a: Agent, url: string) => a.delete(url).set('X-Requested-With', 'fetch');
 
-async function registerFirstUser(a: Agent, name = 'Kai', email = 'kai@example.com') {
-  const res = await post(a, '/api/auth/register', { name, email, password: 'secret-pw-1' });
+/** First account self-registers and becomes the admin. */
+async function registerAdmin(a: Agent, name = 'Kai', username = 'kai') {
+  const res = await post(a, '/api/auth/register', { name, username, password: 'secret-pw-1' });
   expect(res.status).toBe(201);
+  expect(res.body.isAdmin).toBe(true);
   return res.body as { id: number; name: string };
 }
 
-/** First user invites a friend who registers through an account invite. */
-async function registerInvitedUser(host: Agent, a: Agent, name: string, email: string) {
-  const invite = await post(host, '/api/invites', { kind: 'account' });
-  expect(invite.status).toBe(201);
-  const res = await post(a, '/api/auth/register', {
-    name,
-    email,
-    password: 'secret-pw-2',
-    token: invite.body.token,
-  });
-  expect(res.status).toBe(201);
-  return res.body as { id: number; name: string };
+/** Admin creates an account; the new user signs in on their own agent. */
+async function createUserAndLogin(admin: Agent, a: Agent, name: string, username: string) {
+  const created = await post(admin, '/api/admin/users', { name, username, password: 'secret-pw-2' });
+  expect(created.status).toBe(201);
+  const login = await post(a, '/api/auth/login', { username, password: 'secret-pw-2' });
+  expect(login.status).toBe(200);
+  return login.body as { id: number; name: string };
 }
 
 async function createGroup(a: Agent, name = 'Trip') {
@@ -46,62 +43,88 @@ async function createGroup(a: Agent, name = 'Trip') {
 }
 
 async function joinViaGroupInvite(host: Agent, joiner: Agent, groupId: number) {
-  const invite = await post(host, '/api/invites', { kind: 'group', groupId });
+  const invite = await post(host, '/api/invites', { groupId });
   expect(invite.status).toBe(201);
   const res = await post(joiner, `/api/invites/${invite.body.token}/accept`);
   expect(res.status).toBe(200);
 }
 
-describe('auth', () => {
-  it('allows the first user to register without an invite, then requires invites', async () => {
-    const status = await agent().get('/api/auth/status');
-    expect(status.body).toEqual({ needsSetup: true });
+describe('auth and account management', () => {
+  it('first user registers as admin, then registration is closed', async () => {
+    expect((await agent().get('/api/auth/status')).body).toEqual({ needsSetup: true });
 
-    const a = agent();
-    await registerFirstUser(a);
-    const me = await a.get('/api/auth/me');
-    expect(me.status).toBe(200);
-    expect(me.body.name).toBe('Kai');
+    const kai = agent();
+    await registerAdmin(kai);
+    const me = await kai.get('/api/auth/me');
+    expect(me.body).toMatchObject({ name: 'Kai', username: 'kai', isAdmin: true });
 
     expect((await agent().get('/api/auth/status')).body).toEqual({ needsSetup: false });
-    const noInvite = await post(agent(), '/api/auth/register', {
+    const closed = await post(agent(), '/api/auth/register', {
       name: 'Eve',
-      email: 'eve@example.com',
+      username: 'eve',
       password: 'password-123',
     });
-    expect(noInvite.status).toBe(403);
+    expect(closed.status).toBe(403);
   });
 
-  it('supports login/logout and account invites', async () => {
-    const host = agent();
-    await registerFirstUser(host);
-    const friend = agent();
-    await registerInvitedUser(host, friend, 'Anna', 'anna@example.com');
+  it('only the admin can create accounts; usernames are unique', async () => {
+    const kai = agent();
+    await registerAdmin(kai);
+    const anna = agent();
+    await createUserAndLogin(kai, anna, 'Anna', 'anna');
+    expect((await anna.get('/api/auth/me')).body).toMatchObject({ username: 'anna', isAdmin: false });
 
-    // Account invites are single-use.
-    const reuse = await post(agent(), '/api/auth/register', {
-      name: 'Eve',
-      email: 'eve@example.com',
-      password: 'password-123',
-      token: 'not-a-real-token',
-    });
-    expect(reuse.status).toBe(404);
+    // Non-admins cannot manage accounts.
+    expect((await post(anna, '/api/admin/users', { name: 'Eve', username: 'eve', password: 'password-123' })).status).toBe(403);
+    expect((await anna.get('/api/admin/users')).status).toBe(403);
+
+    // Admin sees the user list; duplicate usernames are rejected (case-insensitive).
+    const list = await kai.get('/api/admin/users');
+    expect(list.body).toHaveLength(2);
+    const dupe = await post(kai, '/api/admin/users', { name: 'Anna 2', username: 'Anna', password: 'password-123' });
+    expect(dupe.status).toBe(409);
+  });
+
+  it('supports login/logout and rejects wrong credentials', async () => {
+    const kai = agent();
+    await registerAdmin(kai);
+    const anna = agent();
+    await createUserAndLogin(kai, anna, 'Anna', 'anna');
 
     const fresh = agent();
     expect((await fresh.get('/api/auth/me')).status).toBe(401);
-    const bad = await post(fresh, '/api/auth/login', { email: 'anna@example.com', password: 'wrong-pass' });
-    expect(bad.status).toBe(401);
-    const ok = await post(fresh, '/api/auth/login', { email: 'anna@example.com', password: 'secret-pw-2' });
-    expect(ok.status).toBe(200);
-    expect((await fresh.get('/api/auth/me')).body.name).toBe('Anna');
+    expect((await post(fresh, '/api/auth/login', { username: 'anna', password: 'wrong-pass' })).status).toBe(401);
+    expect((await post(fresh, '/api/auth/login', { username: 'ANNA', password: 'secret-pw-2' })).status).toBe(200);
     await post(fresh, '/api/auth/logout');
     expect((await fresh.get('/api/auth/me')).status).toBe(401);
+  });
+
+  it('users can change their password', async () => {
+    const kai = agent();
+    await registerAdmin(kai);
+    const anna = agent();
+    await createUserAndLogin(kai, anna, 'Anna', 'anna');
+
+    const wrong = await post(anna, '/api/auth/password', {
+      currentPassword: 'not-my-password',
+      newPassword: 'brand-new-pw-1',
+    });
+    expect(wrong.status).toBe(401);
+
+    const ok = await post(anna, '/api/auth/password', {
+      currentPassword: 'secret-pw-2',
+      newPassword: 'brand-new-pw-1',
+    });
+    expect(ok.status).toBe(204);
+
+    expect((await post(agent(), '/api/auth/login', { username: 'anna', password: 'secret-pw-2' })).status).toBe(401);
+    expect((await post(agent(), '/api/auth/login', { username: 'anna', password: 'brand-new-pw-1' })).status).toBe(200);
   });
 
   it('rejects mutations without the custom header (CSRF backstop)', async () => {
     const res = await agent().post('/api/auth/register').send({
       name: 'Kai',
-      email: 'kai@example.com',
+      username: 'kai',
       password: 'secret-pw-1',
     });
     expect(res.status).toBe(401);
@@ -111,9 +134,9 @@ describe('auth', () => {
 describe('groups and membership', () => {
   it('isolates groups: non-members get 404, ex-members lose access', async () => {
     const kai = agent();
-    await registerFirstUser(kai);
+    await registerAdmin(kai);
     const anna = agent();
-    await registerInvitedUser(kai, anna, 'Anna', 'anna@example.com');
+    await createUserAndLogin(kai, anna, 'Anna', 'anna');
 
     const { id: groupId } = await createGroup(kai, 'Secret Trip');
     expect((await anna.get(`/api/groups/${groupId}`)).status).toBe(404);
@@ -128,14 +151,14 @@ describe('groups and membership', () => {
 
   it('group invites are reusable, joining twice is harmless', async () => {
     const kai = agent();
-    await registerFirstUser(kai);
+    await registerAdmin(kai);
     const anna = agent();
-    await registerInvitedUser(kai, anna, 'Anna', 'anna@example.com');
+    await createUserAndLogin(kai, anna, 'Anna', 'anna');
     const ben = agent();
-    await registerInvitedUser(kai, ben, 'Ben', 'ben@example.com');
+    await createUserAndLogin(kai, ben, 'Ben', 'ben');
 
     const { id: groupId } = await createGroup(kai);
-    const invite = await post(kai, '/api/invites', { kind: 'group', groupId });
+    const invite = await post(kai, '/api/invites', { groupId });
     expect((await post(anna, `/api/invites/${invite.body.token}/accept`)).status).toBe(200);
     expect((await post(ben, `/api/invites/${invite.body.token}/accept`)).status).toBe(200);
     expect((await post(ben, `/api/invites/${invite.body.token}/accept`)).status).toBe(200);
@@ -144,32 +167,26 @@ describe('groups and membership', () => {
     expect(detail.body.members).toHaveLength(3);
   });
 
-  it('lets a new person register directly through a group invite link', async () => {
+  it('invite preview is public but accepting requires an account', async () => {
     const kai = agent();
-    await registerFirstUser(kai);
+    await registerAdmin(kai);
     const { id: groupId } = await createGroup(kai);
-    const invite = await post(kai, '/api/invites', { kind: 'group', groupId });
+    const invite = await post(kai, '/api/invites', { groupId });
 
     const preview = await agent().get(`/api/invites/${invite.body.token}`);
-    expect(preview.body.kind).toBe('group');
+    expect(preview.status).toBe(200);
     expect(preview.body.groupName).toBe('Trip');
+    expect(preview.body.inviterName).toBe('Kai');
 
-    const newbie = agent();
-    const res = await post(newbie, '/api/auth/register', {
-      name: 'Cleo',
-      email: 'cleo@example.com',
-      password: 'password-123',
-      token: invite.body.token,
-    });
-    expect(res.status).toBe(201);
-    expect((await newbie.get(`/api/groups/${groupId}`)).status).toBe(200);
+    expect((await post(agent(), `/api/invites/${invite.body.token}/accept`)).status).toBe(401);
+    expect((await agent().get('/api/invites/not-a-real-token')).status).toBe(404);
   });
 
   it('only owners can rename/archive; owner cannot leave', async () => {
     const kai = agent();
-    await registerFirstUser(kai);
+    await registerAdmin(kai);
     const anna = agent();
-    await registerInvitedUser(kai, anna, 'Anna', 'anna@example.com');
+    await createUserAndLogin(kai, anna, 'Anna', 'anna');
     const { id: groupId } = await createGroup(kai);
     await joinViaGroupInvite(kai, anna, groupId);
 
@@ -190,11 +207,11 @@ describe('expenses, balances, settle up', () => {
 
   beforeEach(async () => {
     kai = agent();
-    kaiId = (await registerFirstUser(kai)).id;
+    kaiId = (await registerAdmin(kai)).id;
     anna = agent();
-    annaId = (await registerInvitedUser(kai, anna, 'Anna', 'anna@example.com')).id;
+    annaId = (await createUserAndLogin(kai, anna, 'Anna', 'anna')).id;
     ben = agent();
-    benId = (await registerInvitedUser(kai, ben, 'Ben', 'ben@example.com')).id;
+    benId = (await createUserAndLogin(kai, ben, 'Ben', 'ben')).id;
     groupId = (await createGroup(kai, 'Flat')).id;
     await joinViaGroupInvite(kai, anna, groupId);
     await joinViaGroupInvite(kai, ben, groupId);

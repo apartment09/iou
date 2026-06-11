@@ -4,7 +4,7 @@ import { useAuthStatus, useLogin } from '../api/hooks.js';
 import { Button, Card, ErrorText, Field, TextInput } from '../components/ui.js';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const login = useLogin();
   const { data: status } = useAuthStatus();
@@ -14,7 +14,7 @@ export function LoginPage() {
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    login.mutate({ email, password }, { onSuccess: () => navigate(next, { replace: true }) });
+    login.mutate({ username, password }, { onSuccess: () => navigate(next, { replace: true }) });
   };
 
   return (
@@ -26,13 +26,13 @@ export function LoginPage() {
       </div>
       <Card>
         <form onSubmit={submit} className="space-y-4">
-          <Field label="Email">
+          <Field label="Username">
             <TextInput
-              type="email"
-              autoComplete="email"
+              autoComplete="username"
+              autoCapitalize="none"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </Field>
           <Field label="Password">
@@ -60,7 +60,7 @@ export function LoginPage() {
       )}
       {!status?.needsSetup && (
         <p className="mt-4 text-center text-sm text-slate-400">
-          New accounts need an invite link from an existing member.
+          No account yet? Ask the admin to create one for you.
         </p>
       )}
     </div>

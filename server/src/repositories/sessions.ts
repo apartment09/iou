@@ -11,13 +11,17 @@ export class SessionRepository {
   }
 
   findUser(tokenHash: string, now: string): UserDto | undefined {
-    return this.db
+    const row = this.db
       .prepare(
-        `SELECT u.id, u.email, u.name FROM sessions s
+        `SELECT u.id, u.username, u.name, u.is_admin FROM sessions s
          JOIN users u ON u.id = s.user_id
          WHERE s.token_hash = ? AND s.expires_at > ?`,
       )
-      .get(tokenHash, now) as UserDto | undefined;
+      .get(tokenHash, now) as
+      | { id: number; username: string; name: string; is_admin: 0 | 1 }
+      | undefined;
+    if (!row) return undefined;
+    return { id: row.id, username: row.username, name: row.name, isAdmin: Boolean(row.is_admin) };
   }
 
   delete(tokenHash: string): void {

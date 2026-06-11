@@ -107,4 +107,14 @@ INSERT INTO categories (group_id, name, icon) VALUES
   (NULL, 'Other', '📦');
 `,
   },
+  {
+    // Accounts are admin-managed now: username replaces email, the first
+    // user becomes admin. Account-kind invites are no longer issued.
+    id: '002_username_admin',
+    sql: `
+ALTER TABLE users RENAME COLUMN email TO username;
+ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
+UPDATE users SET is_admin = 1 WHERE id = (SELECT MIN(id) FROM users);
+`,
+  },
 ];

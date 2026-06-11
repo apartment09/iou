@@ -10,7 +10,7 @@ export function inviteRoutes(auth: AuthService, invites: InviteService): Router 
 
   router.post('/', requireAuth(auth), validate(createInviteSchema), (req, res) => {
     const input = req.body as CreateInviteInput;
-    res.status(201).json(invites.create(req.user!, input.kind, input.groupId));
+    res.status(201).json(invites.create(req.user!, input.groupId));
   });
 
   // Public: the invite page must render before login/registration.

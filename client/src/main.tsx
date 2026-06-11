@@ -13,6 +13,8 @@ import { GroupPage } from './pages/Group.js';
 import { ExpenseFormPage } from './pages/ExpenseForm.js';
 import { SettleUpPage } from './pages/SettleUp.js';
 import { GroupSettingsPage } from './pages/GroupSettings.js';
+import { AdminUsersPage } from './pages/AdminUsers.js';
+import { AccountPage } from './pages/Account.js';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +38,22 @@ createRoot(document.getElementById('root')!).render(
             element={
               <RequireAuth>
                 <DashboardPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <RequireAuth>
+                <AdminUsersPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/account"
+            element={
+              <RequireAuth>
+                <AccountPage />
               </RequireAuth>
             }
           />

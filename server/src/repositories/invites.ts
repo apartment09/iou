@@ -3,12 +3,9 @@ import type { Db } from '../db/connection.js';
 export interface InviteRow {
   id: number;
   token: string;
-  kind: 'account' | 'group';
-  group_id: number | null;
+  group_id: number;
   created_by: number;
   expires_at: string;
-  used_by: number | null;
-  used_at: string | null;
 }
 
 export class InviteRepository {
@@ -16,8 +13,7 @@ export class InviteRepository {
 
   create(input: {
     token: string;
-    kind: 'account' | 'group';
-    groupId: number | null;
+    groupId: number;
     createdBy: number;
     now: string;
     expiresAt: string;
@@ -25,22 +21,18 @@ export class InviteRepository {
     const result = this.db
       .prepare(
         `INSERT INTO invites (token, kind, group_id, created_by, created_at, expires_at)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         VALUES (?, 'group', ?, ?, ?, ?)`,
       )
-      .run(input.token, input.kind, input.groupId, input.createdBy, input.now, input.expiresAt);
+      .run(input.token, input.groupId, input.createdBy, input.now, input.expiresAt);
     return Number(result.lastInsertRowid);
   }
 
   findByToken(token: string): InviteRow | undefined {
     return this.db
       .prepare(
-        `SELECT id, token, kind, group_id, created_by, expires_at, used_by, used_at
-         FROM invites WHERE token = ?`,
+        `SELECT id, token, group_id, created_by, expires_at
+         FROM invites WHERE token = ? AND kind = 'group'`,
       )
       .get(token) as InviteRow | undefined;
-  }
-
-  markUsed(id: number, userId: number, now: string): void {
-    this.db.prepare('UPDATE invites SET used_by = ?, used_at = ? WHERE id = ?').run(userId, now, id);
   }
 }

@@ -42,7 +42,7 @@ export const useAuthStatus = () =>
 export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { email: string; password: string }) => post<UserDto>('/auth/login', input),
+    mutationFn: (input: { username: string; password: string }) => post<UserDto>('/auth/login', input),
     onSuccess: (user) => qc.setQueryData(['me'], user),
   });
 }
@@ -50,12 +50,32 @@ export function useLogin() {
 export function useRegister() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { name: string; email: string; password: string; token?: string }) =>
+    mutationFn: (input: { name: string; username: string; password: string }) =>
       post<UserDto>('/auth/register', input),
     onSuccess: (user) => {
       qc.setQueryData(['me'], user);
       void qc.invalidateQueries({ queryKey: ['auth-status'] });
     },
+  });
+}
+
+export const useChangePassword = () =>
+  useMutation({
+    mutationFn: (input: { currentPassword: string; newPassword: string }) =>
+      post('/auth/password', input),
+  });
+
+// ---- admin: account management ----
+
+export const useUsers = () =>
+  useQuery({ queryKey: ['admin-users'], queryFn: () => get<UserDto[]>('/admin/users') });
+
+export function useCreateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { name: string; username: string; password: string }) =>
+      post<UserDto>('/admin/users', input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
   });
 }
 
@@ -162,15 +182,13 @@ export const useCreateCategory = (groupId: number) =>
 
 export interface CreatedInvite {
   token: string;
-  kind: 'account' | 'group';
-  groupId: number | null;
+  groupId: number;
   expiresAt: string;
 }
 
 export const useCreateInvite = () =>
   useMutation({
-    mutationFn: (input: { kind: 'account' | 'group'; groupId?: number }) =>
-      post<CreatedInvite>('/invites', input),
+    mutationFn: (input: { groupId: number }) => post<CreatedInvite>('/invites', input),
   });
 
 export const useInvitePreview = (token: string) =>
