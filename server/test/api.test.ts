@@ -182,6 +182,72 @@ describe('groups and membership', () => {
     expect((await agent().get('/api/invites/not-a-real-token')).status).toBe(404);
   });
 
+  it('any member can add users directly; user directory requires auth', async () => {
+    const kai = agent();
+    await registerAdmin(kai);
+    const anna = agent();
+    const annaUser = await createUserAndLogin(kai, anna, 'Anna', 'anna');
+    const ben = agent();
+    const benUser = await createUserAndLogin(kai, ben, 'Ben', 'ben');
+
+    expect((await agent().get('/api/users')).status).toBe(401);
+    const directory = await anna.get('/api/users');
+    expect(directory.status).toBe(200);
+    expect(directory.body).toHaveLength(3);
+
+    const { id: groupId } = await createGroup(kai);
+    await joinViaGroupInvite(kai, anna, groupId);
+
+    // Anna (a regular member) adds Ben directly — no invite link needed.
+    expect((await post(anna, `/api/groups/${groupId}/members`, { userId: benUser.id })).status).toBe(204);
+    expect((await ben.get(`/api/groups/${groupId}`)).status).toBe(200);
+    // Adding twice is harmless; unknown users are a 404.
+    expect((await post(anna, `/api/groups/${groupId}/members`, { userId: benUser.id })).status).toBe(204);
+    expect((await post(anna, `/api/groups/${groupId}/members`, { userId: 9999 })).status).toBe(404);
+
+    const detail = await kai.get(`/api/groups/${groupId}`);
+    expect(detail.body.members).toHaveLength(3);
+    void annaUser;
+  });
+
+  it('any member can remove members without expenses; expense history blocks removal', async () => {
+    const kai = agent();
+    const kaiUser = await registerAdmin(kai);
+    const anna = agent();
+    const annaUser = await createUserAndLogin(kai, anna, 'Anna', 'anna');
+    const ben = agent();
+    const benUser = await createUserAndLogin(kai, ben, 'Ben', 'ben');
+
+    const { id: groupId } = await createGroup(kai);
+    await post(kai, `/api/groups/${groupId}/members`, { userId: annaUser.id });
+    await post(kai, `/api/groups/${groupId}/members`, { userId: benUser.id });
+
+    // Removing yourself or the owner is rejected.
+    expect((await del(anna, `/api/groups/${groupId}/members/${annaUser.id}`)).status).toBe(409);
+    expect((await del(anna, `/api/groups/${groupId}/members/${kaiUser.id}`)).status).toBe(409);
+
+    // Ben gets an expense: he can no longer be removed — even when settled.
+    await post(kai, `/api/groups/${groupId}/expenses`, {
+      title: 'Pizza',
+      amountCents: 1000,
+      date: '2026-06-10',
+      paidBy: kaiUser.id,
+      split: { method: 'equal', participants: [kaiUser.id, benUser.id] },
+    });
+    expect((await del(anna, `/api/groups/${groupId}/members/${benUser.id}`)).status).toBe(409);
+    await post(ben, `/api/groups/${groupId}/settlements`, {
+      payerId: benUser.id,
+      recipientId: kaiUser.id,
+      amountCents: 500,
+      date: '2026-06-11',
+    });
+    expect((await del(anna, `/api/groups/${groupId}/members/${benUser.id}`)).status).toBe(409);
+
+    // Anna has no expenses — any member (Ben) can remove her.
+    expect((await del(ben, `/api/groups/${groupId}/members/${annaUser.id}`)).status).toBe(204);
+    expect((await anna.get(`/api/groups/${groupId}`)).status).toBe(404);
+  });
+
   it('only owners can rename/archive; owner cannot leave', async () => {
     const kai = agent();
     await registerAdmin(kai);

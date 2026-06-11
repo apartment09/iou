@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
+  useAddMember,
+  useAllUsers,
   useArchiveGroup,
   useCreateCategory,
   useCreateInvite,
@@ -11,7 +13,7 @@ import {
   useRenameGroup,
 } from '../api/hooks.js';
 import { Shell } from '../components/Layout.js';
-import { Avatar, Button, Card, ErrorText, Field, Spinner, TextInput } from '../components/ui.js';
+import { Avatar, Button, Card, ErrorText, Field, Select, Spinner, TextInput } from '../components/ui.js';
 
 export function GroupSettingsPage() {
   const groupId = Number(useParams().groupId);
@@ -22,11 +24,14 @@ export function GroupSettingsPage() {
   const rename = useRenameGroup(groupId);
   const archive = useArchiveGroup(groupId);
   const leave = useLeaveGroup(groupId);
+  const addMember = useAddMember(groupId);
   const removeMember = useRemoveMember(groupId);
+  const { data: allUsers } = useAllUsers();
   const createInvite = useCreateInvite();
   const createCategory = useCreateCategory(groupId);
 
   const [name, setName] = useState<string | null>(null);
+  const [userToAdd, setUserToAdd] = useState<number | ''>('');
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [categoryName, setCategoryName] = useState('');
@@ -113,7 +118,7 @@ export function GroupSettingsPage() {
                     </span>
                   )}
                 </span>
-                {isOwner && member.userId !== me.id && !archived && (
+                {member.userId !== me.id && member.role !== 'owner' && !archived && (
                   <button
                     onClick={() => {
                       if (window.confirm(`Remove ${member.name} from the group?`)) {
@@ -129,6 +134,41 @@ export function GroupSettingsPage() {
             ))}
           </ul>
           <ErrorText>{removeMember.error?.message}</ErrorText>
+
+          {!archived && (() => {
+            const candidates =
+              allUsers?.filter((u) => !activeMembers.some((m) => m.userId === u.id)) ?? [];
+            if (candidates.length === 0) return null;
+            return (
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <div className="flex gap-2">
+                  <Select
+                    value={userToAdd}
+                    onChange={(e) => setUserToAdd(e.target.value === '' ? '' : Number(e.target.value))}
+                  >
+                    <option value="">Add someone…</option>
+                    {candidates.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name} (@{u.username})
+                      </option>
+                    ))}
+                  </Select>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={userToAdd === '' || addMember.isPending}
+                    onClick={() => {
+                      if (userToAdd === '') return;
+                      addMember.mutate(userToAdd, { onSuccess: () => setUserToAdd('') });
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+                <ErrorText>{addMember.error?.message}</ErrorText>
+              </div>
+            );
+          })()}
 
           {!archived && (
             <div className="mt-4 border-t border-slate-100 pt-4">

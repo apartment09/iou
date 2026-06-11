@@ -39,6 +39,10 @@ export const createInviteSchema = z.object({
   groupId: z.number().int().positive(),
 });
 
+export const addMemberSchema = z.object({
+  userId: z.number().int().positive(),
+});
+
 const userId = z.number().int().positive();
 
 export const splitInputSchema = z.discriminatedUnion('method', [
@@ -95,6 +99,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type GroupNameInput = z.infer<typeof groupNameSchema>;
 export type CreateInviteInput = z.infer<typeof createInviteSchema>;
+export type AddMemberInput = z.infer<typeof addMemberSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type SettlementInput = z.infer<typeof settlementSchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;

@@ -125,5 +125,8 @@ The original MUST/SHOULD list was good. These are the refinements:
   the app prompts to settle up first. Members who left stay visible in
   history (`left_at` timestamp, no row deletion).
 - **Permissions:** any group member can add/edit/delete expenses (trust-based,
-  like Splitwise — the activity feed is the accountability mechanism). Only
-  the owner can rename/archive the group and remove members.
+  like Splitwise — the activity feed is the accountability mechanism). Any
+  member can add users to the group and remove members — but removal is only
+  possible while no expense involves that person; once they have expense
+  history they can only leave themselves (after settling up). Only the owner
+  can rename/archive the group, and the owner cannot be removed.

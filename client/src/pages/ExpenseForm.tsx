@@ -20,7 +20,7 @@ export function ExpenseFormPage({ mode }: { mode: 'new' | 'edit' }) {
   const expenseId = Number(useParams().expenseId);
   const { data: group } = useGroup(groupId);
   const { data: me } = useMe();
-  const existing = useExpense(groupId, expenseId);
+  const existing = useExpense(groupId, expenseId, mode === 'edit');
   const loadingExisting = mode === 'edit' && existing.isPending;
 
   if (!group || !me || loadingExisting) {

@@ -65,6 +65,14 @@ export const useChangePassword = () =>
       post('/auth/password', input),
   });
 
+/** All accounts on the server — used to pick people to add to a group. */
+export const useAllUsers = () =>
+  useQuery({
+    queryKey: ['users'],
+    queryFn: () => get<UserDto[]>('/users'),
+    staleTime: 60 * 1000,
+  });
+
 // ---- admin: account management ----
 
 export const useUsers = () =>
@@ -113,10 +121,11 @@ export const useExpenses = (groupId: number) =>
     queryFn: () => get<ExpenseDto[]>(`/groups/${groupId}/expenses`),
   });
 
-export const useExpense = (groupId: number, expenseId: number) =>
+export const useExpense = (groupId: number, expenseId: number, enabled = true) =>
   useQuery({
     queryKey: ['groups', groupId, 'expenses', expenseId],
     queryFn: () => get<ExpenseDto>(`/groups/${groupId}/expenses/${expenseId}`),
+    enabled: enabled && Number.isInteger(expenseId),
   });
 
 export const useActivity = (groupId: number) =>
@@ -153,6 +162,9 @@ export const useArchiveGroup = (groupId: number) =>
 
 export const useLeaveGroup = (groupId: number) =>
   useGroupMutation(() => post(`/groups/${groupId}/leave`));
+
+export const useAddMember = (groupId: number) =>
+  useGroupMutation((userId: number) => post(`/groups/${groupId}/members`, { userId }));
 
 export const useRemoveMember = (groupId: number) =>
   useGroupMutation((userId: number) => del(`/groups/${groupId}/members/${userId}`));

@@ -68,3 +68,13 @@ export function authRoutes(auth: AuthService): Router {
 
   return router;
 }
+
+/** Directory of all accounts — any signed-in user can pick people to add to
+ * a group. This is a private friends-and-family server; no pagination needed. */
+export function userDirectoryRoutes(auth: AuthService, users: { list(): unknown }): Router {
+  const router = Router();
+  router.get('/', requireAuth(auth), (_req, res) => {
+    res.json(users.list());
+  });
+  return router;
+}

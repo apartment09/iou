@@ -277,6 +277,8 @@ function activityText(entry: ActivityDto): string {
       return `${entry.actorName} deleted a payment of ${amount}`;
     case 'member_joined':
       return `${p.userName} joined the group`;
+    case 'member_added':
+      return `${entry.actorName} added ${p.userName}`;
     case 'member_left':
       return `${p.userName} left the group`;
     case 'member_removed':

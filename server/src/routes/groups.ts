@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import {
+  addMemberSchema,
   createCategorySchema,
   expenseSchema,
   groupNameSchema,
   settlementSchema,
+  type AddMemberInput,
   type CreateCategoryInput,
   type ExpenseInput,
   type GroupNameInput,
@@ -63,6 +65,11 @@ export function groupRoutes(deps: Deps): Router {
 
   group.post('/leave', (req, res) => {
     groupService.leave(req.user!, req.group!);
+    res.status(204).end();
+  });
+
+  group.post('/members', validate(addMemberSchema), (req, res) => {
+    groupService.addMember(req.user!, req.group!, (req.body as AddMemberInput).userId);
     res.status(204).end();
   });
 

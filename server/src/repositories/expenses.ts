@@ -164,6 +164,24 @@ export class ExpenseRepository {
     return result;
   }
 
+  /** True if any non-deleted expense in the group involves this user,
+   * as payer or split participant. */
+  hasInvolvement(groupId: number, userId: number): boolean {
+    const row = this.db
+      .prepare(
+        `SELECT EXISTS(
+           SELECT 1 FROM expenses e
+           WHERE e.group_id = ? AND e.deleted_at IS NULL AND e.paid_by = ?
+         ) OR EXISTS(
+           SELECT 1 FROM expense_splits s
+           JOIN expenses e ON e.id = s.expense_id
+           WHERE e.group_id = ? AND e.deleted_at IS NULL AND s.user_id = ?
+         ) AS involved`,
+      )
+      .get(groupId, userId, groupId, userId) as { involved: 0 | 1 };
+    return Boolean(row.involved);
+  }
+
   /** The current user's net balance in every group they touch (dashboard). */
   balancesByGroupForUser(userId: number): Map<number, number> {
     const balances = new Map<number, number>();

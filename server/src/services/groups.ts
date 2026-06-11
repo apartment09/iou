@@ -5,6 +5,7 @@ import { nowIso } from '../util.js';
 import type { GroupRepository, GroupRow } from '../repositories/groups.js';
 import type { ExpenseRepository } from '../repositories/expenses.js';
 import type { ActivityRepository } from '../repositories/activity.js';
+import type { UserRepository } from '../repositories/users.js';
 import type { BalanceService } from './balances.js';
 
 export class GroupService {
@@ -13,6 +14,7 @@ export class GroupService {
     private readonly groups: GroupRepository,
     private readonly expenses: ExpenseRepository,
     private readonly activity: ActivityRepository,
+    private readonly users: UserRepository,
     private readonly balances: BalanceService,
   ) {}
 
@@ -70,12 +72,31 @@ export class GroupService {
     this.activity.add(group.id, actor.id, 'member_left', null, { userName: actor.name }, now);
   }
 
+  /** Any member can add any existing account. Idempotent for active members. */
+  addMember(actor: UserDto, group: GroupRow, userId: number): void {
+    if (group.archived_at) throw conflict('This group is archived');
+    const user = this.users.findById(userId);
+    if (!user) throw notFound('User not found');
+    const existing = this.groups.findMember(group.id, userId);
+    if (existing && !existing.left_at) return; // already in — adding twice is fine
+    const now = nowIso();
+    if (existing) this.groups.reactivateMember(group.id, userId, now);
+    else this.groups.addMember(group.id, userId, 'member', now);
+    this.activity.add(group.id, actor.id, 'member_added', null, { userName: user.name }, now);
+  }
+
+  /** Any member can remove a member — but only while no expense involves
+   * them. Someone with history can only leave themselves (after settling). */
   removeMember(actor: UserDto, group: GroupRow, userId: number): void {
-    this.requireOwner(group.id, actor.id);
-    if (userId === actor.id) throw conflict('Use archive instead of removing yourself');
+    if (userId === actor.id) throw conflict('Use "Leave group" instead of removing yourself');
     const membership = this.groups.findMember(group.id, userId);
     if (!membership || membership.left_at) throw notFound('Member not found');
-    this.requireSettled(group.id, userId, 'This member still has an open balance — settle up first');
+    if (membership.role === 'owner') throw conflict('The owner cannot be removed');
+    if (this.expenses.hasInvolvement(group.id, userId)) {
+      throw conflict(
+        'This member already has expenses recorded — they can only leave the group themselves',
+      );
+    }
     const now = nowIso();
     const name = this.groups.members(group.id).find((m) => m.userId === userId)?.name;
     this.groups.markLeft(group.id, userId, now);

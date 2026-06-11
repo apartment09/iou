@@ -20,7 +20,7 @@ import { ExpenseService } from './services/expenses.js';
 import { requireCustomHeader } from './middleware/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './errors.js';
-import { authRoutes } from './routes/auth.js';
+import { authRoutes, userDirectoryRoutes } from './routes/auth.js';
 import { adminRoutes } from './routes/admin.js';
 import { inviteRoutes } from './routes/invites.js';
 import { groupRoutes } from './routes/groups.js';
@@ -46,7 +46,7 @@ export function createApp(db: Db): App {
   const inviteService = new InviteService(inviteRepo, groupRepo, userRepo, activityRepo);
   const authService = new AuthService(userRepo, sessionRepo);
   const balanceService = new BalanceService(expenseRepo, groupRepo);
-  const groupService = new GroupService(db, groupRepo, expenseRepo, activityRepo, balanceService);
+  const groupService = new GroupService(db, groupRepo, expenseRepo, activityRepo, userRepo, balanceService);
   const expenseService = new ExpenseService(db, expenseRepo, groupRepo, categoryRepo, activityRepo);
 
   const app = express();
@@ -58,6 +58,7 @@ export function createApp(db: Db): App {
   const api = express.Router();
   api.use(requireCustomHeader);
   api.use('/auth', authRoutes(authService));
+  api.use('/users', userDirectoryRoutes(authService, userRepo));
   api.use('/admin', adminRoutes(authService));
   api.use('/invites', inviteRoutes(authService, inviteService));
   api.use(
