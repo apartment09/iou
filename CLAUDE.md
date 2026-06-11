@@ -74,21 +74,24 @@ Dev login: first registered user needs no invite (setup mode). DB lives at
   `index.ts`. Catch-up is capped (24/tick), short months clamp to the anchor
   day, failures log `recurring_skipped` activity instead of stalling.
 
-## Deploy (not yet performed — planned)
+## Deploy (live)
 
-Target: Hetzner server (178.104.73.139), pm2 app `iou` on port **3001**,
-nginx vhost `iou.kai-hagen.de` serving `client/dist` statically and proxying
-`/api` to :3001, TLS via Let's Encrypt — same pattern as Recall. Server needs
-`NODE_ENV=production` (secure cookies). First deploy:
+- **URL:** https://iou.kai-hagen.de (Let's Encrypt, HTTP→HTTPS redirect)
+- **Server:** Hetzner 178.104.73.139, repo at `/root/iou`
+  (github.com/apartment09/iou)
+- **Process:** pm2 app `iou`, **port 3004** with `NODE_ENV=production`
+  (ports 3000–3003 are taken by recall, one-dot-server, utm-maestro,
+  unopcom — the CLAUDE.md in the parent folder understates what runs there)
+- **nginx:** `/etc/nginx/sites-enabled/iou` — serves `client/dist`
+  statically, proxies `/api` → 127.0.0.1:3004
+- **DB:** `/root/iou/server/data/iou.db`
+- **Backups:** `/root/backup-dbs.sh` via `/etc/cron.d/db-backups`, nightly
+  03:15 — snapshots IOU's and Recall's DBs to `/root/backups/` with 7-day
+  weekday rotation
+
+Deploy an update:
 
 ```bash
-# server
-cd /root && git clone <repo> iou && cd iou
-npm install && npm run build
-cd server && NODE_ENV=production pm2 start dist/index.js --name iou && cd ..
-pm2 save
+ssh root@178.104.73.139
+cd /root/iou && git pull && npm install && npm run build && pm2 restart iou
 ```
-
-Subsequent deploys: `git pull && npm install && npm run build && pm2 restart iou`.
-Back up `server/data/iou.db` (nightly `sqlite3 .backup` cron recommended,
-ideally together with Recall's DB).
