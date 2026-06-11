@@ -1,4 +1,4 @@
-import { CircleUserRound, House, LogOut, Monitor, Moon, Plus, Sun, Users } from 'lucide-react';
+import { CircleUserRound, House, LogOut, Moon, Plus, Sun, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useGroups, useLogout, useMe } from '../api/hooks.js';
@@ -163,16 +163,14 @@ function MobileTab({ to, icon, label, end }: { to: string; icon: ReactNode; labe
   );
 }
 
-const THEME_CYCLE: ThemePref[] = ['system', 'light', 'dark'];
 const THEME_META = {
-  system: { icon: Monitor, label: 'System theme' },
   light: { icon: Sun, label: 'Light theme' },
   dark: { icon: Moon, label: 'Dark theme' },
 } as const;
 
 export function ThemeToggle({ variant = 'rail' }: { variant?: 'rail' | 'row' }) {
   const [pref, setPref] = useTheme();
-  const next = THEME_CYCLE[(THEME_CYCLE.indexOf(pref) + 1) % THEME_CYCLE.length]!;
+  const next: ThemePref = pref === 'light' ? 'dark' : 'light';
   const { icon: Icon, label } = THEME_META[pref];
 
   if (variant === 'row') {

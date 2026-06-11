@@ -1,25 +1,23 @@
 import { useSyncExternalStore } from 'react';
 
-export type ThemePref = 'system' | 'light' | 'dark';
+export type ThemePref = 'light' | 'dark';
 
 const KEY = 'iou-theme';
-const media = window.matchMedia('(prefers-color-scheme: dark)');
 const listeners = new Set<() => void>();
 
+/** Stored choice, or the OS preference as the first-visit default. */
 export function getThemePref(): ThemePref {
   const stored = localStorage.getItem(KEY);
-  return stored === 'light' || stored === 'dark' ? stored : 'system';
+  if (stored === 'light' || stored === 'dark') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 function apply(): void {
-  const pref = getThemePref();
-  const dark = pref === 'dark' || (pref === 'system' && media.matches);
-  document.documentElement.classList.toggle('dark', dark);
+  document.documentElement.classList.toggle('dark', getThemePref() === 'dark');
 }
 
 export function setThemePref(pref: ThemePref): void {
-  if (pref === 'system') localStorage.removeItem(KEY);
-  else localStorage.setItem(KEY, pref);
+  localStorage.setItem(KEY, pref);
   apply();
   listeners.forEach((fn) => fn());
 }
@@ -27,7 +25,6 @@ export function setThemePref(pref: ThemePref): void {
 /** Call once before render. */
 export function initTheme(): void {
   apply();
-  media.addEventListener('change', apply);
 }
 
 export function useTheme(): [ThemePref, (pref: ThemePref) => void] {
