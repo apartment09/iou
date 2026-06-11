@@ -138,14 +138,14 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
 
   return (
     <div>
-      <div className="mb-3 grid grid-cols-4 gap-1 rounded-xl bg-slate-200 p-1">
+      <div className="mb-3 grid grid-cols-4 gap-1 rounded-md bg-surface-2 p-1">
         {(Object.keys(METHOD_LABELS) as SplitMethod[]).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => switchMethod(m)}
             className={`rounded-lg px-1 py-1.5 text-xs font-semibold transition-colors ${
-              method === m ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'
+              method === m ? 'bg-surface text-accent shadow-sm' : 'text-muted'
             }`}
           >
             {METHOD_LABELS[m]}
@@ -153,7 +153,7 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
         ))}
       </div>
 
-      <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+      <ul className="divide-y divide-edge rounded-md border border-edge bg-surface">
         {members.map((member) => {
           const previewCents = preview.shares.get(member.userId);
           return (
@@ -163,7 +163,7 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
                   type="checkbox"
                   checked={participants.has(member.userId)}
                   onChange={() => toggleParticipant(member.userId)}
-                  className="h-5 w-5 accent-emerald-600"
+                  className="h-5 w-5 accent-accent"
                 />
               )}
               <Avatar name={member.name} size="sm" />
@@ -175,7 +175,7 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
                   placeholder="0,00"
                   value={exact[member.userId] ?? ''}
                   onChange={(e) => setExactFor(member.userId, e.target.value)}
-                  className="w-24 rounded-lg border border-slate-300 px-2 py-1.5 text-right text-sm outline-none focus:border-emerald-500"
+                  className="w-24 rounded-lg border border-edge px-2 py-1.5 text-right text-sm outline-none focus:border-accent"
                 />
               )}
               {method === 'percentage' && (
@@ -185,9 +185,9 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
                     placeholder="0"
                     value={percents[member.userId] ?? ''}
                     onChange={(e) => setPercentFor(member.userId, e.target.value)}
-                    className="w-16 rounded-lg border border-slate-300 px-2 py-1.5 text-right text-sm outline-none focus:border-emerald-500"
+                    className="w-16 rounded-lg border border-edge px-2 py-1.5 text-right text-sm outline-none focus:border-accent"
                   />
-                  <span className="text-sm text-slate-400">%</span>
+                  <span className="text-sm text-faint">%</span>
                 </span>
               )}
               {method === 'shares' && (
@@ -195,7 +195,7 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
                   <button
                     type="button"
                     onClick={() => bumpShares(member.userId, -1)}
-                    className="h-7 w-7 rounded-full bg-slate-100 font-bold text-slate-600 hover:bg-slate-200"
+                    className="h-7 w-7 rounded-full bg-surface-2 font-bold text-muted hover:bg-surface-2"
                   >
                     −
                   </button>
@@ -205,14 +205,14 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
                   <button
                     type="button"
                     onClick={() => bumpShares(member.userId, 1)}
-                    className="h-7 w-7 rounded-full bg-slate-100 font-bold text-slate-600 hover:bg-slate-200"
+                    className="h-7 w-7 rounded-full bg-surface-2 font-bold text-muted hover:bg-surface-2"
                   >
                     +
                   </button>
                 </span>
               )}
 
-              <span className="w-20 text-right text-sm text-slate-500">
+              <span className="w-20 text-right text-sm text-muted">
                 {previewCents !== undefined ? <Money cents={previewCents} /> : '—'}
               </span>
             </li>
@@ -221,15 +221,15 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
       </ul>
 
       {method === 'exact' && totalCents !== null && exactSum !== totalCents && (
-        <p className="mt-2 text-sm text-amber-600">
+        <p className="mt-2 text-sm text-warn">
           {money(exactSum)} of {money(totalCents)} assigned — {money(totalCents - exactSum)} left
         </p>
       )}
       {method === 'percentage' && Math.abs(percentSum - 100) > 0.001 && (
-        <p className="mt-2 text-sm text-amber-600">{percentSum.toLocaleString('de-DE')}% of 100% assigned</p>
+        <p className="mt-2 text-sm text-warn">{percentSum.toLocaleString('de-DE')}% of 100% assigned</p>
       )}
       {preview.error && method !== 'exact' && method !== 'percentage' && (
-        <p className="mt-2 text-sm text-amber-600">{preview.error}</p>
+        <p className="mt-2 text-sm text-warn">{preview.error}</p>
       )}
     </div>
   );

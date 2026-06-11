@@ -69,8 +69,8 @@ function CategoryChip({
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
         selected
-          ? 'bg-emerald-600 text-white'
-          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          ? 'bg-accent text-white'
+          : 'bg-surface-2 text-muted hover:bg-surface-2'
       }`}
     >
       <CategoryIcon name={icon} className="h-4 w-4" />
@@ -165,7 +165,7 @@ function ExpenseForm({
               autoFocus={mode === 'new'}
               value={amountText}
               onChange={(e) => setAmountText(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-center text-3xl font-bold tabular-nums outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+              className="w-full rounded-md border border-edge bg-surface px-3 py-3 text-center text-3xl font-bold tabular-nums outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
             />
           </Field>
           <Field label="Title">
@@ -199,7 +199,7 @@ function ExpenseForm({
               placeholder="Anything worth remembering…"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+              className="w-full rounded-md border border-edge bg-surface px-3 py-2.5 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
             />
           </Field>
           <Field label="Category">
@@ -224,7 +224,7 @@ function ExpenseForm({
         </Card>
 
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-slate-600">Split between</h2>
+          <h2 className="mb-3 text-sm font-semibold text-muted">Split between</h2>
           <SplitEditor
             members={members}
             totalCents={amountCents !== null && amountCents > 0 ? amountCents : null}

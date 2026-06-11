@@ -35,7 +35,7 @@ export function NewGroupPage() {
             Create group
           </Button>
         </form>
-        <p className="mt-4 text-xs text-slate-400">
+        <p className="mt-4 text-xs text-faint">
           You can invite people afterwards via a share link — or keep it to yourself for personal
           expense tracking.
         </p>

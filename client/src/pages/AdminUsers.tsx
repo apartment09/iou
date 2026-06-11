@@ -43,7 +43,7 @@ function CreateUserCard() {
 
   return (
     <Card>
-      <h2 className="mb-3 text-sm font-semibold text-slate-600">Create account</h2>
+      <h2 className="mb-3 text-sm font-semibold text-muted">Create account</h2>
       <form onSubmit={submit} className="space-y-4">
         <Field label="Name">
           <TextInput required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
@@ -75,7 +75,7 @@ function CreateUserCard() {
         </Button>
       </form>
       {lastCreated && (
-        <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent">
           Account for <strong>{lastCreated.name}</strong> created. Tell them their username
           (<strong>{lastCreated.username}</strong>) and the password — they can change it under
           "Account" after signing in.
@@ -108,7 +108,7 @@ function UserListCard() {
 
   return (
     <Card>
-      <h2 className="mb-3 text-sm font-semibold text-slate-600">
+      <h2 className="mb-3 text-sm font-semibold text-muted">
         All accounts{users ? ` (${users.length})` : ''}
       </h2>
       {isPending ? (
@@ -121,10 +121,10 @@ function UserListCard() {
                 <Avatar name={user.name} size="sm" />
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">
                   {user.name}
-                  <span className="ml-2 text-xs text-slate-400">@{user.username}</span>
+                  <span className="ml-2 text-xs text-faint">@{user.username}</span>
                 </span>
                 {user.isAdmin && (
-                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">
+                  <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted">
                     admin
                   </span>
                 )}
@@ -135,7 +135,7 @@ function UserListCard() {
                     setNewPassword('');
                     setResetDone(null);
                   }}
-                  className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+                  className="text-xs font-semibold text-faint hover:text-muted"
                 >
                   Reset password
                 </button>
@@ -143,7 +143,7 @@ function UserListCard() {
               {resetUserId === user.id && (
                 <form
                   onSubmit={(e) => submitReset(e, user.id, user.name)}
-                  className="mt-2 flex gap-2 rounded-xl bg-slate-50 p-2"
+                  className="mt-2 flex gap-2 rounded-md bg-surface-2 p-2"
                 >
                   <TextInput
                     required
@@ -164,7 +164,7 @@ function UserListCard() {
       )}
       <ErrorText>{reset.error?.message}</ErrorText>
       {resetDone && (
-        <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent">
           Password for <strong>{resetDone}</strong> reset — tell them the new one; they can change
           it under "Account".
         </p>

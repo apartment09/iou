@@ -23,9 +23,27 @@ See `CONCEPT.md` (product decisions) and `PLAN.md` (architecture rationale).
   creates all other accounts via `/api/admin/users` (UI: "Users" page); users
   change their own password under "Account". Group invite links only let
   existing accounts join groups.
-- **client/** — Vite + React 19 + Tailwind 4 + TanStack Query. Mobile-first.
+- **client/** — Vite + React 19 + Tailwind 4 + TanStack Query.
   All server state via query hooks in `src/api/hooks.ts`; every group mutation
   invalidates the `['groups']` subtree.
+
+## Design system ("The Rail")
+
+- **Tokens, not palette classes.** All colors are CSS variables in
+  `client/src/index.css`, exposed as semantic utilities: `bg-app`,
+  `bg-surface`, `bg-surface-2`, `border-edge`, `text-ink`, `text-muted`,
+  `text-faint`, `accent`/`accent-strong`/`accent-soft`, `pos`/`neg`/`warn`
+  (+ `-soft`). Never use raw Tailwind palette colors in components (the
+  avatar palette is the one exception). Light/dark is a variable swap on
+  `.dark` (class on `<html>`, managed by `src/lib/theme.ts` — light/dark/
+  system, persisted in localStorage).
+- **Layout shells.** Pages render through `Shell` (`src/components/
+  Layout.tsx`), which resolves the active layout from a registry. The Rail
+  (`src/layouts/RailShell.tsx`): full rail ≥1024px, icon rail ≥768px,
+  bottom tab bar below; sticky top bar carries title + page actions; the
+  group page shows balances/stats in a permanent right column on desktop.
+  To offer another layout later: implement `ShellProps`
+  (`src/layouts/types.ts`), register it in `LAYOUTS`, extend `LayoutId`.
 
 ## Commands (run from repo root)
 

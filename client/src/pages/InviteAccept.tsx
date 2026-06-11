@@ -16,10 +16,10 @@ export function InviteAcceptPage() {
       <div className="mb-8 text-center text-5xl">💌</div>
       <Card>
         {preview.isError || !preview.data ? (
-          <p className="text-sm text-slate-600">This invite link is invalid or has expired.</p>
+          <p className="text-sm text-muted">This invite link is invalid or has expired.</p>
         ) : (
           <>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted">
               <strong>{preview.data.inviterName}</strong> invited you to join
             </p>
             <p className="mt-1 text-xl font-bold">{preview.data.groupName}</p>
@@ -41,7 +41,7 @@ export function InviteAcceptPage() {
                 <Link to={`/login?next=${encodeURIComponent(`/invite/${token}`)}`} className="block">
                   <Button className="w-full">Sign in to join</Button>
                 </Link>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-faint">
                   No account yet? Ask {preview.data.inviterName} (or the admin) to create one for
                   you, then come back to this link.
                 </p>

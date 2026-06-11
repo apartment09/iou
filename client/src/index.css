@@ -1,5 +1,66 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens — the only place colors are defined. Components use the
+ * semantic utilities (bg-surface, text-muted, border-edge, …), so a future
+ * skin/layout only needs to swap these variables. */
+:root {
+  color-scheme: light;
+  --t-app: #f7f7f8;
+  --t-surface: #ffffff;
+  --t-surface-2: #eef0f2;
+  --t-edge: #e3e5e8;
+  --t-ink: #1a1c1f;
+  --t-muted: #66696f;
+  --t-faint: #9b9ea4;
+  --t-accent: #4f46e5;
+  --t-accent-strong: #4338ca;
+  --t-accent-soft: #eef0fe;
+  --t-pos: #047857;
+  --t-neg: #dc2626;
+  --t-neg-soft: #fdf0f0;
+  --t-warn: #b45309;
+  --t-warn-soft: #fdf6e7;
+}
+
+.dark {
+  color-scheme: dark;
+  --t-app: #101114;
+  --t-surface: #17181c;
+  --t-surface-2: #212327;
+  --t-edge: #282a30;
+  --t-ink: #e8e9eb;
+  --t-muted: #9da0a8;
+  --t-faint: #61646c;
+  --t-accent: #7c84f2;
+  --t-accent-strong: #98a0ff;
+  --t-accent-soft: #24264a;
+  --t-pos: #34d399;
+  --t-neg: #f87171;
+  --t-neg-soft: #321a1c;
+  --t-warn: #fbbf24;
+  --t-warn-soft: #2e2410;
+}
+
+@theme inline {
+  --color-app: var(--t-app);
+  --color-surface: var(--t-surface);
+  --color-surface-2: var(--t-surface-2);
+  --color-edge: var(--t-edge);
+  --color-ink: var(--t-ink);
+  --color-muted: var(--t-muted);
+  --color-faint: var(--t-faint);
+  --color-accent: var(--t-accent);
+  --color-accent-strong: var(--t-accent-strong);
+  --color-accent-soft: var(--t-accent-soft);
+  --color-pos: var(--t-pos);
+  --color-neg: var(--t-neg);
+  --color-neg-soft: var(--t-neg-soft);
+  --color-warn: var(--t-warn);
+  --color-warn-soft: var(--t-warn-soft);
+}
+
 body {
-  @apply bg-slate-100 text-slate-900 antialiased;
+  @apply bg-app text-ink antialiased;
 }

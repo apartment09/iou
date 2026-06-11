@@ -22,7 +22,7 @@ export function LoginPage() {
       <div className="mb-8 text-center">
         <div className="text-5xl">💸</div>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Splitt</h1>
-        <p className="mt-1 text-sm text-slate-500">Shared expenses, settled simply.</p>
+        <p className="mt-1 text-sm text-muted">Shared expenses, settled simply.</p>
       </div>
       <Card>
         <form onSubmit={submit} className="space-y-4">
@@ -51,15 +51,15 @@ export function LoginPage() {
         </form>
       </Card>
       {status?.needsSetup && (
-        <p className="mt-4 text-center text-sm text-slate-500">
+        <p className="mt-4 text-center text-sm text-muted">
           First time here?{' '}
-          <Link to="/register" className="font-semibold text-emerald-600">
+          <Link to="/register" className="font-semibold text-accent">
             Create the first account
           </Link>
         </p>
       )}
       {!status?.needsSetup && (
-        <p className="mt-4 text-center text-sm text-slate-400">
+        <p className="mt-4 text-center text-sm text-faint">
           No account yet? Ask the admin to create one for you.
         </p>
       )}

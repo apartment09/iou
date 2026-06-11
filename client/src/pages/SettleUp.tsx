@@ -107,7 +107,7 @@ function SettleForm({
   return (
     <Shell title={mode === 'new' ? 'Settle up' : 'Edit payment'} back={backTo}>
       <Card>
-        <p className="mb-4 text-sm text-slate-500">
+        <p className="mb-4 text-sm text-muted">
           {mode === 'new'
             ? 'Record a payment made outside the app — cash, bank transfer, PayPal…'
             : 'Fix the details of this recorded payment.'}

@@ -18,12 +18,12 @@ export function RegisterPage() {
         <SetupForm />
       ) : (
         <Card>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted">
             Accounts on this server are created by the admin — ask them for one.
           </p>
           <p className="mt-3 text-sm">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-emerald-600">
+            <Link to="/login" className="font-semibold text-accent">
               Sign in
             </Link>
           </p>
@@ -50,7 +50,7 @@ function SetupForm() {
 
   return (
     <Card>
-      <p className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+      <p className="mb-4 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent">
         Welcome! This first account becomes the <strong>admin</strong> — it can create accounts
         for everyone else.
       </p>

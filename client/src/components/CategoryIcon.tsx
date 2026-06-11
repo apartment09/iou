@@ -100,8 +100,8 @@ export function IconPicker({ value, onChange }: { value: string; onChange: (icon
           onClick={() => onChange(key)}
           className={`flex h-9 items-center justify-center rounded-lg transition-colors ${
             value === key
-              ? 'bg-emerald-600 text-white'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              ? 'bg-accent text-white'
+              : 'bg-surface-2 text-muted hover:bg-surface-2'
           }`}
         >
           <Icon className="h-4 w-4" aria-hidden />

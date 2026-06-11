@@ -84,7 +84,7 @@ export function GroupSettingsPage() {
       <div className="space-y-4">
         {isOwner && !archived && (
           <Card>
-            <h2 className="mb-3 text-sm font-semibold text-slate-600">Name</h2>
+            <h2 className="mb-3 text-sm font-semibold text-muted">Name</h2>
             <form onSubmit={submitRename} className="flex gap-2">
               <TextInput
                 maxLength={80}
@@ -99,7 +99,7 @@ export function GroupSettingsPage() {
         )}
 
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-slate-600">
+          <h2 className="mb-3 text-sm font-semibold text-muted">
             Members ({activeMembers.length})
           </h2>
           <ul className="space-y-2.5">
@@ -108,9 +108,9 @@ export function GroupSettingsPage() {
                 <Avatar name={member.name} size="sm" />
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">
                   {member.name}
-                  {member.userId === me.id && <span className="text-slate-400"> (you)</span>}
+                  {member.userId === me.id && <span className="text-faint"> (you)</span>}
                   {member.role === 'owner' && (
-                    <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">
+                    <span className="ml-2 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted">
                       owner
                     </span>
                   )}
@@ -122,7 +122,7 @@ export function GroupSettingsPage() {
                         removeMember.mutate(member.userId);
                       }
                     }}
-                    className="text-xs font-semibold text-red-500 hover:text-red-700"
+                    className="text-xs font-semibold text-neg hover:text-neg"
                   >
                     Remove
                   </button>
@@ -137,7 +137,7 @@ export function GroupSettingsPage() {
               allUsers?.filter((u) => !activeMembers.some((m) => m.userId === u.id)) ?? [];
             if (candidates.length === 0) return null;
             return (
-              <div className="mt-4 border-t border-slate-100 pt-4">
+              <div className="mt-4 border-t border-edge pt-4">
                 <div className="flex gap-2">
                   <Select
                     value={userToAdd}
@@ -168,10 +168,10 @@ export function GroupSettingsPage() {
           })()}
 
           {!archived && (
-            <div className="mt-4 border-t border-slate-100 pt-4">
+            <div className="mt-4 border-t border-edge pt-4">
               {inviteUrl ? (
                 <div>
-                  <p className="mb-2 text-xs text-slate-500">
+                  <p className="mb-2 text-xs text-muted">
                     Share this link — anyone with an account on this server can join. Expires in
                     14 days:
                   </p>
@@ -180,7 +180,7 @@ export function GroupSettingsPage() {
                       readOnly
                       value={inviteUrl}
                       onFocus={(e) => e.target.select()}
-                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-600"
+                      className="w-full rounded-lg border border-edge bg-surface-2 px-2 py-1.5 text-xs text-muted"
                     />
                     <Button type="button" variant="secondary" onClick={copyInvite}>
                       {copied ? '✓' : 'Copy'}
@@ -208,7 +208,7 @@ export function GroupSettingsPage() {
         {!archived && <CategoriesCard groupId={groupId} />}
 
         <Card>
-          <h2 className="mb-3 text-sm font-semibold text-red-600">Danger zone</h2>
+          <h2 className="mb-3 text-sm font-semibold text-neg">Danger zone</h2>
           {!isOwner && (
             <>
               <Button
@@ -243,7 +243,7 @@ export function GroupSettingsPage() {
               <ErrorText>{archive.error?.message}</ErrorText>
             </>
           )}
-          {isOwner && archived && <p className="text-sm text-slate-400">This group is archived.</p>}
+          {isOwner && archived && <p className="text-sm text-faint">This group is archived.</p>}
         </Card>
       </div>
     </Shell>
@@ -256,17 +256,17 @@ function RecurringCard({ groupId }: { groupId: number }) {
 
   return (
     <Card>
-      <h2 className="mb-3 text-sm font-semibold text-slate-600">Recurring expenses</h2>
+      <h2 className="mb-3 text-sm font-semibold text-muted">Recurring expenses</h2>
       {templates && templates.length > 0 ? (
-        <ul className="divide-y divide-slate-100">
+        <ul className="divide-y divide-edge">
           {templates.map((template) => (
             <li key={template.id} className="flex items-center gap-3 py-2">
-              <span className="text-slate-400">
+              <span className="text-faint">
                 <Repeat className="h-4 w-4" aria-hidden />
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{template.title}</p>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-faint">
                   {money(template.amountCents)} · {template.frequency === 'monthly' ? 'monthly' : 'weekly'} · next{' '}
                   {formatDay(template.nextDate)}
                 </p>
@@ -279,7 +279,7 @@ function RecurringCard({ groupId }: { groupId: number }) {
                     remove.mutate(template.id);
                   }
                 }}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                className="rounded-lg p-1.5 text-faint hover:bg-neg-soft hover:text-neg"
               >
                 <Trash2 className="h-4 w-4" aria-hidden />
               </button>
@@ -287,7 +287,7 @@ function RecurringCard({ groupId }: { groupId: number }) {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-slate-400">Rent, internet, subscriptions — added automatically.</p>
+        <p className="text-sm text-faint">Rent, internet, subscriptions — added automatically.</p>
       )}
       <ErrorText>{remove.error?.message}</ErrorText>
       <Link to={`/groups/${groupId}/recurring/new`} className="mt-3 block">
@@ -333,11 +333,11 @@ function CategoriesCard({ groupId }: { groupId: number }) {
 
   return (
     <Card>
-      <h2 className="mb-3 text-sm font-semibold text-slate-600">Categories</h2>
-      <ul className="divide-y divide-slate-100">
+      <h2 className="mb-3 text-sm font-semibold text-muted">Categories</h2>
+      <ul className="divide-y divide-edge">
         {categories?.map((category) => (
           <li key={category.id} className="flex items-center gap-3 py-2">
-            <span className="text-slate-500">
+            <span className="text-muted">
               <CategoryIcon name={category.icon} />
             </span>
             <span className="min-w-0 flex-1 truncate text-sm font-medium">{category.name}</span>
@@ -345,7 +345,7 @@ function CategoriesCard({ groupId }: { groupId: number }) {
               type="button"
               aria-label={`Edit ${category.name}`}
               onClick={() => openFor(category.id, category.name, category.icon)}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              className="rounded-lg p-1.5 text-faint hover:bg-surface-2 hover:text-muted"
             >
               <Pencil className="h-4 w-4" aria-hidden />
             </button>
@@ -353,7 +353,7 @@ function CategoriesCard({ groupId }: { groupId: number }) {
               type="button"
               aria-label={`Delete ${category.name}`}
               onClick={() => deleteCategory(category.id, category.name)}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+              className="rounded-lg p-1.5 text-faint hover:bg-neg-soft hover:text-neg"
             >
               <Trash2 className="h-4 w-4" aria-hidden />
             </button>
@@ -372,7 +372,7 @@ function CategoriesCard({ groupId }: { groupId: number }) {
           + New category
         </Button>
       ) : (
-        <form onSubmit={submit} className="mt-3 space-y-3 rounded-xl bg-slate-50 p-3">
+        <form onSubmit={submit} className="mt-3 space-y-3 rounded-md bg-surface-2 p-3">
           <Field label={editingId === 0 ? 'New category' : 'Edit category'}>
             <TextInput
               required

@@ -4,6 +4,9 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './index.css';
 import { ApiError } from './api/client.js';
+import { initTheme } from './lib/theme.js';
+
+initTheme();
 import { RequireAuth } from './components/Layout.js';
 import { LoginPage } from './pages/Login.js';
 import { RegisterPage } from './pages/Register.js';
