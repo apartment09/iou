@@ -151,8 +151,10 @@ function ExpenseRow({
       <div className="text-right">
         {isSettlement ? (
           <Money cents={expense.amountCents} />
-        ) : impact === 0 ? (
+        ) : expense.paidBy !== myId && !expense.splits.some((s) => s.userId === myId) ? (
           <span className="text-xs text-slate-300">not involved</span>
+        ) : impact === 0 ? (
+          <span className="text-xs text-slate-400">✓ even</span>
         ) : (
           <>
             <p className="text-[10px] uppercase tracking-wide text-slate-400">

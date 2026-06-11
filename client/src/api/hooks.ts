@@ -178,6 +178,7 @@ export const useInvitePreview = (token: string) =>
     queryKey: ['invites', token],
     queryFn: () => get<InvitePreviewDto>(`/invites/${token}`),
     retry: false,
+    enabled: token.length > 0,
   });
 
 export function useAcceptInvite() {
