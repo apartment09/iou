@@ -31,6 +31,11 @@ export const changePasswordSchema = z.object({
   newPassword: password,
 });
 
+/** Admin resets a user's password (no email = no self-service reset). */
+export const resetPasswordSchema = z.object({
+  password,
+});
+
 export const groupNameSchema = z.object({
   name: z.string().trim().min(1).max(80),
 });
@@ -88,6 +93,17 @@ export const settlementSchema = z
     message: 'Payer and recipient must be different people',
   });
 
+export const recurringExpenseSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  amountCents: z.number().int().positive().max(100_000_000),
+  categoryId: z.number().int().positive().nullable().optional(),
+  paidBy: userId,
+  split: splitInputSchema,
+  notes: z.string().trim().max(500).optional(),
+  frequency: z.enum(['weekly', 'monthly']),
+  startDate: isoDate,
+});
+
 export const createCategorySchema = z.object({
   name: z.string().trim().min(1).max(40),
   // Lucide icon name, e.g. "shopping-cart"
@@ -98,9 +114,11 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type GroupNameInput = z.infer<typeof groupNameSchema>;
 export type CreateInviteInput = z.infer<typeof createInviteSchema>;
 export type AddMemberInput = z.infer<typeof addMemberSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type SettlementInput = z.infer<typeof settlementSchema>;
+export type RecurringExpenseInput = z.infer<typeof recurringExpenseSchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;

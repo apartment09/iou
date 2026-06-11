@@ -16,6 +16,7 @@ import { SettleUpPage } from './pages/SettleUp.js';
 import { GroupSettingsPage } from './pages/GroupSettings.js';
 import { AdminUsersPage } from './pages/AdminUsers.js';
 import { AccountPage } from './pages/Account.js';
+import { RecurringFormPage } from './pages/RecurringForm.js';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -97,6 +98,14 @@ createRoot(document.getElementById('root')!).render(
             element={
               <RequireAuth>
                 <ExpenseFormPage mode="edit" />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/groups/:groupId/recurring/new"
+            element={
+              <RequireAuth>
+                <RecurringFormPage />
               </RequireAuth>
             }
           />

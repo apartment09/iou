@@ -146,4 +146,30 @@ WHERE category_id IN (SELECT id FROM categories WHERE group_id IS NULL);
 DELETE FROM categories WHERE group_id IS NULL;
 `,
   },
+  {
+    // Templates for rent/internet/subscriptions. The scheduler materializes
+    // them into ordinary expenses; anchor_day keeps "the 31st" pinned even
+    // after a short month forces a clamp.
+    id: '004_recurring_expenses',
+    sql: `
+CREATE TABLE recurring_expenses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  group_id INTEGER NOT NULL REFERENCES expense_groups(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+  currency TEXT NOT NULL DEFAULT 'EUR',
+  category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+  paid_by INTEGER NOT NULL REFERENCES users(id),
+  split_method TEXT NOT NULL,
+  split_input TEXT NOT NULL,
+  notes TEXT,
+  frequency TEXT NOT NULL CHECK (frequency IN ('weekly', 'monthly')),
+  next_date TEXT NOT NULL,
+  anchor_day INTEGER NOT NULL,
+  created_by INTEGER NOT NULL REFERENCES users(id),
+  created_at TEXT NOT NULL
+);
+CREATE INDEX idx_recurring_due ON recurring_expenses(next_date);
+`,
+  },
 ];

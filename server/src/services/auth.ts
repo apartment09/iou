@@ -1,5 +1,5 @@
 import type { CreateUserInput, RegisterInput, UserDto } from '@splitt/shared';
-import { conflict, forbidden, unauthorized } from '../errors.js';
+import { conflict, forbidden, notFound, unauthorized } from '../errors.js';
 import { hashToken, isoInDays, newToken, nowIso } from '../util.js';
 import type { SessionRepository } from '../repositories/sessions.js';
 import type { UserRepository } from '../repositories/users.js';
@@ -49,6 +49,13 @@ export class AuthService {
   listUsers(actor: UserDto): UserDto[] {
     this.requireAdmin(actor);
     return this.users.list();
+  }
+
+  resetPassword(actor: UserDto, userId: number, password: string): void {
+    this.requireAdmin(actor);
+    const user = this.users.findById(userId);
+    if (!user) throw notFound('User not found');
+    this.users.updatePassword(userId, hashPassword(password));
   }
 
   login(username: string, password: string): SessionResult {

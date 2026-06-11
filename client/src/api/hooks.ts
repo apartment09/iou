@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ActivityDto,
   AuthStatusDto,
@@ -9,6 +9,9 @@ import type {
   GroupDetailDto,
   GroupSummaryDto,
   InvitePreviewDto,
+  MonthlyStatsDto,
+  RecurringExpenseDto,
+  RecurringExpenseInput,
   SettlementInput,
   UserDto,
 } from '@splitt/shared';
@@ -87,6 +90,12 @@ export function useCreateUser() {
   });
 }
 
+export const useResetPassword = () =>
+  useMutation({
+    mutationFn: (input: { userId: number; password: string }) =>
+      post(`/admin/users/${input.userId}/password`, { password: input.password }),
+  });
+
 export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
@@ -115,10 +124,17 @@ export const useBalances = (groupId: number) =>
     queryFn: () => get<BalancesDto>(`/groups/${groupId}/balances`),
   });
 
+const EXPENSE_PAGE_SIZE = 50;
+
+/** Paged expense list: pages of 50, `fetchNextPage` loads older entries. */
 export const useExpenses = (groupId: number) =>
-  useQuery({
+  useInfiniteQuery({
     queryKey: ['groups', groupId, 'expenses'],
-    queryFn: () => get<ExpenseDto[]>(`/groups/${groupId}/expenses`),
+    queryFn: ({ pageParam }) =>
+      get<ExpenseDto[]>(`/groups/${groupId}/expenses?limit=${EXPENSE_PAGE_SIZE}&offset=${pageParam}`),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === EXPENSE_PAGE_SIZE ? allPages.flat().length : undefined,
   });
 
 export const useExpense = (groupId: number, expenseId: number, enabled = true) =>
@@ -126,6 +142,12 @@ export const useExpense = (groupId: number, expenseId: number, enabled = true) =
     queryKey: ['groups', groupId, 'expenses', expenseId],
     queryFn: () => get<ExpenseDto>(`/groups/${groupId}/expenses/${expenseId}`),
     enabled: enabled && Number.isInteger(expenseId),
+  });
+
+export const useMonthlyStats = (groupId: number, month: string) =>
+  useQuery({
+    queryKey: ['groups', groupId, 'stats', month],
+    queryFn: () => get<MonthlyStatsDto>(`/groups/${groupId}/stats?month=${month}`),
   });
 
 export const useActivity = (groupId: number) =>
@@ -184,6 +206,20 @@ export const useCreateSettlement = (groupId: number) =>
   useGroupMutation((input: SettlementInput) =>
     post<ExpenseDto>(`/groups/${groupId}/settlements`, input),
   );
+
+export const useRecurring = (groupId: number) =>
+  useQuery({
+    queryKey: ['groups', groupId, 'recurring'],
+    queryFn: () => get<RecurringExpenseDto[]>(`/groups/${groupId}/recurring`),
+  });
+
+export const useCreateRecurring = (groupId: number) =>
+  useGroupMutation((input: RecurringExpenseInput) =>
+    post<RecurringExpenseDto>(`/groups/${groupId}/recurring`, input),
+  );
+
+export const useDeleteRecurring = (groupId: number) =>
+  useGroupMutation((recurringId: number) => del(`/groups/${groupId}/recurring/${recurringId}`));
 
 export const useUpdateSettlement = (groupId: number, expenseId: number) =>
   useGroupMutation((input: SettlementInput) =>

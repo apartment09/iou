@@ -106,6 +106,7 @@ function ExpenseForm({
   const [split, setSplit] = useState<SplitInput>(
     existing?.splitInput ?? { method: 'equal', participants: members.map((m) => m.userId) },
   );
+  const [notes, setNotes] = useState(existing?.notes ?? '');
   const [formError, setFormError] = useState<string | null>(null);
 
   const amountCents = parseAmount(amountText);
@@ -139,6 +140,7 @@ function ExpenseForm({
       categoryId: categoryId === '' ? null : categoryId,
       paidBy,
       split,
+      notes: notes.trim() || undefined,
     };
     mutation.mutate(input, { onSuccess: () => navigate(`/groups/${groupId}`, { replace: true }) });
   };
@@ -190,6 +192,16 @@ function ExpenseForm({
               </Select>
             </Field>
           </div>
+          <Field label="Notes (optional)">
+            <textarea
+              rows={2}
+              maxLength={500}
+              placeholder="Anything worth remembering…"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+            />
+          </Field>
           <Field label="Category">
             <div className="flex flex-wrap gap-1.5">
               <CategoryChip

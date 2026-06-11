@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import type { ActivityDto, BalancesDto, CategoryDto, ExpenseDto, GroupDetailDto } from '@splitt/shared';
 import {
@@ -7,13 +8,14 @@ import {
   useExpenses,
   useGroup,
   useMe,
+  useMonthlyStats,
 } from '../api/hooks.js';
 import { Fab, Shell } from '../components/Layout.js';
 import { CategoryIcon } from '../components/CategoryIcon.js';
 import { Avatar, Card, EmptyState, Money, Spinner } from '../components/ui.js';
 import { formatDay, formatTimestamp, memberName, money, myImpact } from '../lib/format.js';
 
-const TABS = ['expenses', 'balances', 'activity'] as const;
+const TABS = ['expenses', 'balances', 'stats', 'activity'] as const;
 type Tab = (typeof TABS)[number];
 
 export function GroupPage() {
@@ -56,7 +58,7 @@ export function GroupPage() {
         </p>
       )}
 
-      <div className="mb-4 grid grid-cols-3 gap-1 rounded-xl bg-slate-200 p-1">
+      <div className="mb-4 grid grid-cols-4 gap-1 rounded-xl bg-slate-200 p-1">
         {TABS.map((t) => (
           <button
             key={t}
@@ -72,6 +74,7 @@ export function GroupPage() {
 
       {tab === 'expenses' && <ExpensesTab groupId={groupId} group={group} myId={me.id} />}
       {tab === 'balances' && <BalancesTab groupId={groupId} myId={me.id} archived={!!group.archivedAt} />}
+      {tab === 'stats' && <StatsTab groupId={groupId} />}
       {tab === 'activity' && <ActivityTab groupId={groupId} />}
 
       {!group.archivedAt && tab !== 'balances' && (
@@ -82,10 +85,11 @@ export function GroupPage() {
 }
 
 function ExpensesTab({ groupId, group, myId }: { groupId: number; group: GroupDetailDto; myId: number }) {
-  const { data: expenses, isPending } = useExpenses(groupId);
+  const { data, isPending, hasNextPage, fetchNextPage, isFetchingNextPage } = useExpenses(groupId);
   const { data: categories } = useCategories(groupId);
   if (isPending) return <Spinner />;
-  if (!expenses?.length) {
+  const expenses = data?.pages.flat() ?? [];
+  if (!expenses.length) {
     return <EmptyState emoji="🧾">No expenses yet. Add the first one!</EmptyState>;
   }
 
@@ -116,6 +120,15 @@ function ExpensesTab({ groupId, group, myId }: { groupId: number; group: GroupDe
           </Card>
         </section>
       ))}
+      {hasNextPage && (
+        <button
+          onClick={() => fetchNextPage()}
+          disabled={isFetchingNextPage}
+          className="mb-2 w-full rounded-xl py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 disabled:text-slate-400"
+        >
+          {isFetchingNextPage ? 'Loading…' : 'Load older expenses'}
+        </button>
+      )}
     </div>
   );
 }
@@ -252,6 +265,100 @@ function SuggestedTransfers({ data, groupId, archived }: { data: BalancesDto; gr
   );
 }
 
+const currentMonth = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const shiftMonth = (month: string, delta: number) => {
+  const [y = 0, m = 1] = month.split('-').map(Number);
+  const total = y * 12 + (m - 1) + delta;
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, '0')}`;
+};
+
+const monthLabel = (month: string) =>
+  new Date(`${month}-01T00:00:00`).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+
+function StatsTab({ groupId }: { groupId: number }) {
+  const [month, setMonth] = useState(currentMonth);
+  const { data: stats, isPending } = useMonthlyStats(groupId, month);
+  const { data: categories } = useCategories(groupId);
+
+  const categoryOf = (id: number | null) =>
+    id === null ? { name: 'Default', icon: null } : (categories?.find((c) => c.id === id) ?? { name: 'Deleted category', icon: null });
+  const maxCents = Math.max(1, ...(stats?.byCategory.map((c) => c.cents) ?? []));
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setMonth(shiftMonth(month, -1))}
+            aria-label="Previous month"
+            className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+          >
+            ‹
+          </button>
+          <h2 className="text-sm font-semibold">{monthLabel(month)}</h2>
+          <button
+            onClick={() => setMonth(shiftMonth(month, 1))}
+            disabled={month >= currentMonth()}
+            aria-label="Next month"
+            className="rounded-full p-2 text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+          >
+            ›
+          </button>
+        </div>
+        {isPending || !stats ? (
+          <Spinner />
+        ) : (
+          <>
+            <p className="mt-2 text-center text-3xl font-bold tabular-nums">{money(stats.totalCents)}</p>
+            <p className="mt-1 text-center text-xs text-slate-400">
+              {stats.expenseCount === 1 ? '1 expense' : `${stats.expenseCount} expenses`} (settlements not counted)
+            </p>
+          </>
+        )}
+      </Card>
+
+      {stats && stats.byCategory.length > 0 && (
+        <Card>
+          <h2 className="mb-3 text-sm font-semibold text-slate-600">By category</h2>
+          <ul className="space-y-3">
+            {stats.byCategory.map((entry) => {
+              const category = categoryOf(entry.categoryId);
+              const percent = stats.totalCents > 0 ? Math.round((entry.cents / stats.totalCents) * 100) : 0;
+              return (
+                <li key={entry.categoryId ?? 'default'} className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                    <CategoryIcon name={category.icon} className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="truncate text-sm font-medium">{category.name}</p>
+                      <p className="text-xs text-slate-400">{percent} %</p>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-emerald-400"
+                        style={{ width: `${(entry.cents / maxCents) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <Money cents={entry.cents} />
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      )}
+      {stats && stats.byCategory.length === 0 && (
+        <EmptyState emoji="📊">No expenses in this month.</EmptyState>
+      )}
+    </div>
+  );
+}
+
 function ActivityTab({ groupId }: { groupId: number }) {
   const { data: activity, isPending } = useActivity(groupId);
   if (isPending) return <Spinner />;
@@ -283,6 +390,8 @@ function activityText(entry: ActivityDto): string {
       return `${entry.actorName} recorded a payment of ${amount}`;
     case 'settlement_updated':
       return `${entry.actorName} edited a payment (${amount})`;
+    case 'recurring_skipped':
+      return `Recurring expense "${p.title}" was skipped (${(entry.payload as { reason?: string }).reason ?? 'error'})`;
     case 'settlement_deleted':
       return `${entry.actorName} deleted a payment of ${amount}`;
     case 'member_joined':

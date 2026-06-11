@@ -12,11 +12,13 @@ import { GroupRepository } from './repositories/groups.js';
 import { CategoryRepository } from './repositories/categories.js';
 import { ExpenseRepository } from './repositories/expenses.js';
 import { ActivityRepository } from './repositories/activity.js';
+import { RecurringRepository } from './repositories/recurring.js';
 import { AuthService } from './services/auth.js';
 import { InviteService } from './services/invites.js';
 import { BalanceService } from './services/balances.js';
 import { GroupService } from './services/groups.js';
 import { ExpenseService } from './services/expenses.js';
+import { RecurringService } from './services/recurring.js';
 import { requireCustomHeader } from './middleware/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './errors.js';
@@ -29,6 +31,7 @@ import { config } from './config.js';
 export interface App {
   express: express.Express;
   sessions: SessionRepository;
+  recurring: RecurringService;
 }
 
 /** Composition root: all wiring happens here, by hand — no DI framework. */
@@ -42,12 +45,16 @@ export function createApp(db: Db): App {
   const categoryRepo = new CategoryRepository(db);
   const expenseRepo = new ExpenseRepository(db);
   const activityRepo = new ActivityRepository(db);
+  const recurringRepo = new RecurringRepository(db);
 
   const inviteService = new InviteService(inviteRepo, groupRepo, userRepo, activityRepo);
   const authService = new AuthService(userRepo, sessionRepo);
   const balanceService = new BalanceService(expenseRepo, groupRepo);
   const groupService = new GroupService(db, groupRepo, expenseRepo, activityRepo, userRepo, categoryRepo, balanceService);
   const expenseService = new ExpenseService(db, expenseRepo, groupRepo, categoryRepo, activityRepo);
+  const recurringService = new RecurringService(
+    recurringRepo, groupRepo, userRepo, categoryRepo, activityRepo, expenseService,
+  );
 
   const app = express();
   app.set('trust proxy', 1); // nginx terminates TLS in front of us
@@ -68,9 +75,11 @@ export function createApp(db: Db): App {
       groupService,
       expenseService,
       balanceService,
+      recurringService,
       groupRepo,
       categoryRepo,
       activityRepo,
+      expenseRepo,
     }),
   );
   api.use(() => {
@@ -93,7 +102,7 @@ export function createApp(db: Db): App {
   }
 
   app.use(errorHandler);
-  return { express: app, sessions: sessionRepo };
+  return { express: app, sessions: sessionRepo, recurring: recurringService };
 }
 
 export { config };

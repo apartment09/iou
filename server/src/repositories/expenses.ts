@@ -182,6 +182,20 @@ export class ExpenseRepository {
     return Boolean(row.involved);
   }
 
+  /** Spending per category for one month ("YYYY-MM"). Settlements are money
+   * moving, not money spent — they're excluded. */
+  monthlyStats(groupId: number, month: string): { categoryId: number | null; cents: number; count: number }[] {
+    return this.db
+      .prepare(
+        `SELECT category_id AS categoryId, SUM(amount_cents) AS cents, COUNT(*) AS count
+         FROM expenses
+         WHERE group_id = ? AND type = 'expense' AND deleted_at IS NULL AND date LIKE ? || '-%'
+         GROUP BY category_id
+         ORDER BY cents DESC`,
+      )
+      .all(groupId, month) as { categoryId: number | null; cents: number; count: number }[];
+  }
+
   /** The current user's net balance in every group they touch (dashboard). */
   balancesByGroupForUser(userId: number): Map<number, number> {
     const balances = new Map<number, number>();

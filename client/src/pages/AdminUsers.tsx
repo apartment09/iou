@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useCreateUser, useMe, useUsers } from '../api/hooks.js';
+import { useCreateUser, useMe, useResetPassword, useUsers } from '../api/hooks.js';
 import { Shell } from '../components/Layout.js';
 import { Avatar, Button, Card, ErrorText, Field, Spinner, TextInput } from '../components/ui.js';
 
@@ -87,6 +87,25 @@ function CreateUserCard() {
 
 function UserListCard() {
   const { data: users, isPending } = useUsers();
+  const reset = useResetPassword();
+  const [resetUserId, setResetUserId] = useState<number | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetDone, setResetDone] = useState<string | null>(null);
+
+  const submitReset = (e: FormEvent, userId: number, name: string) => {
+    e.preventDefault();
+    reset.mutate(
+      { userId, password: newPassword },
+      {
+        onSuccess: () => {
+          setResetUserId(null);
+          setNewPassword('');
+          setResetDone(name);
+        },
+      },
+    );
+  };
+
   return (
     <Card>
       <h2 className="mb-3 text-sm font-semibold text-slate-600">
@@ -97,20 +116,58 @@ function UserListCard() {
       ) : (
         <ul className="space-y-2.5">
           {users?.map((user) => (
-            <li key={user.id} className="flex items-center gap-3">
-              <Avatar name={user.name} size="sm" />
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                {user.name}
-                <span className="ml-2 text-xs text-slate-400">@{user.username}</span>
-              </span>
-              {user.isAdmin && (
-                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">
-                  admin
+            <li key={user.id}>
+              <div className="flex items-center gap-3">
+                <Avatar name={user.name} size="sm" />
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                  {user.name}
+                  <span className="ml-2 text-xs text-slate-400">@{user.username}</span>
                 </span>
+                {user.isAdmin && (
+                  <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-slate-500">
+                    admin
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetUserId(resetUserId === user.id ? null : user.id);
+                    setNewPassword('');
+                    setResetDone(null);
+                  }}
+                  className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+                >
+                  Reset password
+                </button>
+              </div>
+              {resetUserId === user.id && (
+                <form
+                  onSubmit={(e) => submitReset(e, user.id, user.name)}
+                  className="mt-2 flex gap-2 rounded-xl bg-slate-50 p-2"
+                >
+                  <TextInput
+                    required
+                    minLength={8}
+                    placeholder="New password (min. 8 chars)"
+                    autoFocus
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <Button type="submit" variant="secondary" disabled={reset.isPending}>
+                    Set
+                  </Button>
+                </form>
               )}
             </li>
           ))}
         </ul>
+      )}
+      <ErrorText>{reset.error?.message}</ErrorText>
+      {resetDone && (
+        <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          Password for <strong>{resetDone}</strong> reset — tell them the new one; they can change
+          it under "Account".
+        </p>
       )}
     </Card>
   );

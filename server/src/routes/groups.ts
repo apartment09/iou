@@ -4,14 +4,16 @@ import {
   createCategorySchema,
   expenseSchema,
   groupNameSchema,
+  recurringExpenseSchema,
   settlementSchema,
   type AddMemberInput,
   type CreateCategoryInput,
   type ExpenseInput,
   type GroupNameInput,
+  type RecurringExpenseInput,
   type SettlementInput,
 } from '@splitt/shared';
-import { notFound } from '../errors.js';
+import { badRequest, notFound } from '../errors.js';
 import { validate } from '../middleware/validate.js';
 import { requireAuth, requireMembership } from '../middleware/auth.js';
 import type { AuthService } from '../services/auth.js';
@@ -21,19 +23,26 @@ import type { BalanceService } from '../services/balances.js';
 import type { GroupRepository } from '../repositories/groups.js';
 import type { CategoryRepository } from '../repositories/categories.js';
 import type { ActivityRepository } from '../repositories/activity.js';
+import type { ExpenseRepository } from '../repositories/expenses.js';
+import type { RecurringService } from '../services/recurring.js';
 
 interface Deps {
   auth: AuthService;
   groupService: GroupService;
   expenseService: ExpenseService;
   balanceService: BalanceService;
+  recurringService: RecurringService;
   groupRepo: GroupRepository;
   categoryRepo: CategoryRepository;
   activityRepo: ActivityRepository;
+  expenseRepo: ExpenseRepository;
 }
 
 export function groupRoutes(deps: Deps): Router {
-  const { auth, groupService, expenseService, balanceService, groupRepo, categoryRepo, activityRepo } = deps;
+  const {
+    auth, groupService, expenseService, balanceService, recurringService,
+    groupRepo, categoryRepo, activityRepo, expenseRepo,
+  } = deps;
 
   const router = Router();
   router.use(requireAuth(auth));
@@ -82,6 +91,18 @@ export function groupRoutes(deps: Deps): Router {
 
   group.get('/balances', (req, res) => {
     res.json(balanceService.getBalances(req.group!.id));
+  });
+
+  group.get('/stats', (req, res) => {
+    const month = String(req.query.month ?? '');
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw badRequest('month must be YYYY-MM');
+    const byCategory = expenseRepo.monthlyStats(req.group!.id, month);
+    res.json({
+      month,
+      totalCents: byCategory.reduce((s, c) => s + c.cents, 0),
+      expenseCount: byCategory.reduce((s, c) => s + c.count, 0),
+      byCategory,
+    });
   });
 
   group.get('/activity', (req, res) => {
@@ -138,6 +159,19 @@ export function groupRoutes(deps: Deps): Router {
 
   group.delete('/expenses/:expenseId', (req, res) => {
     expenseService.remove(req.user!, req.group!, Number(req.params.expenseId));
+    res.status(204).end();
+  });
+
+  group.get('/recurring', (req, res) => {
+    res.json(recurringService.list(req.group!.id));
+  });
+
+  group.post('/recurring', validate(recurringExpenseSchema), (req, res) => {
+    res.status(201).json(recurringService.create(req.user!, req.group!, req.body as RecurringExpenseInput));
+  });
+
+  group.delete('/recurring/:recurringId', (req, res) => {
+    recurringService.remove(req.group!, Number(req.params.recurringId));
     res.status(204).end();
   });
 

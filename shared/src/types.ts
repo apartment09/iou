@@ -88,6 +88,30 @@ export interface InvitePreviewDto {
   inviterName: string;
 }
 
+export interface RecurringExpenseDto {
+  id: number;
+  groupId: number;
+  title: string;
+  amountCents: number;
+  currency: string;
+  categoryId: number | null;
+  paidBy: number;
+  splitMethod: SplitMethod;
+  splitInput: SplitInput;
+  notes: string | null;
+  frequency: 'weekly' | 'monthly';
+  nextDate: string;
+  createdBy: number;
+}
+
+export interface MonthlyStatsDto {
+  /** "YYYY-MM" */
+  month: string;
+  totalCents: number;
+  expenseCount: number;
+  byCategory: { categoryId: number | null; cents: number; count: number }[];
+}
+
 export interface AuthStatusDto {
   /** True until the very first user registers (allows setup without an invite). */
   needsSetup: boolean;

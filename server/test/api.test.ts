@@ -3,13 +3,16 @@ import request from 'supertest';
 import type TestAgent from 'supertest/lib/agent.js';
 import { openDb } from '../src/db/connection.js';
 import { createApp } from '../src/app.js';
+import { advanceDate } from '../src/services/recurring.js';
 
 type Agent = InstanceType<typeof TestAgent>;
 
+let bundle: ReturnType<typeof createApp>;
 let app: ReturnType<typeof createApp>['express'];
 
 beforeEach(() => {
-  app = createApp(openDb(':memory:')).express;
+  bundle = createApp(openDb(':memory:'));
+  app = bundle.express;
 });
 
 const agent = () => request.agent(app);
@@ -119,6 +122,24 @@ describe('auth and account management', () => {
 
     expect((await post(agent(), '/api/auth/login', { username: 'anna', password: 'secret-pw-2' })).status).toBe(401);
     expect((await post(agent(), '/api/auth/login', { username: 'anna', password: 'brand-new-pw-1' })).status).toBe(200);
+  });
+
+  it('admin can reset any password; non-admins cannot', async () => {
+    const kai = agent();
+    await registerAdmin(kai);
+    const anna = agent();
+    const annaUser = await createUserAndLogin(kai, anna, 'Anna', 'anna');
+
+    expect(
+      (await post(anna, `/api/admin/users/${annaUser.id}/password`, { password: 'hacked-pw-123' })).status,
+    ).toBe(403);
+    expect((await post(kai, '/api/admin/users/9999/password', { password: 'whatever-123' })).status).toBe(404);
+
+    expect(
+      (await post(kai, `/api/admin/users/${annaUser.id}/password`, { password: 'fresh-start-1' })).status,
+    ).toBe(204);
+    expect((await post(agent(), '/api/auth/login', { username: 'anna', password: 'secret-pw-2' })).status).toBe(401);
+    expect((await post(agent(), '/api/auth/login', { username: 'anna', password: 'fresh-start-1' })).status).toBe(200);
   });
 
   it('rejects mutations without the custom header (CSRF backstop)', async () => {
@@ -474,6 +495,117 @@ describe('expenses, balances, settle up', () => {
     const flat = groups.body.find((g: { id: number }) => g.id === groupId);
     expect(flat.myBalanceCents).toBe(-1000);
     expect(flat.memberCount).toBe(3);
+  });
+
+  describe('recurring expenses', () => {
+    it('advanceDate clamps short months but remembers the anchor day', () => {
+      expect(advanceDate('2026-01-31', 'monthly', 31)).toBe('2026-02-28');
+      expect(advanceDate('2026-02-28', 'monthly', 31)).toBe('2026-03-31');
+      expect(advanceDate('2026-12-15', 'monthly', 15)).toBe('2027-01-15');
+      expect(advanceDate('2026-06-29', 'weekly', 29)).toBe('2026-07-06');
+    });
+
+    it('materializes due templates with catch-up; ticking twice is idempotent', async () => {
+      const created = await post(kai, `/api/groups/${groupId}/recurring`, {
+        title: 'Internet',
+        amountCents: 3000,
+        paidBy: kaiId,
+        split: { method: 'equal', participants: [kaiId, annaId, benId] },
+        frequency: 'weekly',
+        startDate: '2026-06-01',
+      });
+      expect(created.status).toBe(201);
+      expect(created.body.nextDate).toBe('2026-06-01');
+
+      bundle.recurring.tick('2026-06-15'); // due: 06-01, 06-08, 06-15
+      bundle.recurring.tick('2026-06-15'); // no-op
+
+      const expenses = await kai.get(`/api/groups/${groupId}/expenses`);
+      const generated = expenses.body.filter((e: { title: string }) => e.title === 'Internet');
+      expect(generated).toHaveLength(3);
+      expect(generated.map((e: { date: string }) => e.date).sort()).toEqual([
+        '2026-06-01', '2026-06-08', '2026-06-15',
+      ]);
+      expect(generated[0].splits).toHaveLength(3);
+
+      const templates = await kai.get(`/api/groups/${groupId}/recurring`);
+      expect(templates.body[0].nextDate).toBe('2026-06-22');
+
+      // Generated expenses count toward balances like any other.
+      const balances = await kai.get(`/api/groups/${groupId}/balances`);
+      const kaiBalance = balances.body.members.find((m: { userId: number }) => m.userId === kaiId);
+      expect(kaiBalance.balanceCents).toBe(6000); // paid 9000, owes 3000
+    });
+
+    it('templates are listable and deletable; nothing fires before the start date', async () => {
+      const created = await post(kai, `/api/groups/${groupId}/recurring`, {
+        title: 'Rent',
+        amountCents: 120000,
+        paidBy: kaiId,
+        split: { method: 'shares', shares: [{ userId: kaiId, shares: 1 }, { userId: annaId, shares: 1 }] },
+        frequency: 'monthly',
+        startDate: '2026-07-01',
+      });
+      bundle.recurring.tick('2026-06-15');
+      expect((await kai.get(`/api/groups/${groupId}/expenses`)).body).toHaveLength(0);
+
+      expect((await del(anna, `/api/groups/${groupId}/recurring/${created.body.id}`)).status).toBe(204);
+      expect((await kai.get(`/api/groups/${groupId}/recurring`)).body).toHaveLength(0);
+      bundle.recurring.tick('2026-07-02');
+      expect((await kai.get(`/api/groups/${groupId}/expenses`)).body).toHaveLength(0);
+    });
+
+    it('a participant who left causes a logged skip, not silent loss or a crash', async () => {
+      await post(kai, `/api/groups/${groupId}/recurring`, {
+        title: 'Streaming',
+        amountCents: 1500,
+        paidBy: kaiId,
+        split: { method: 'equal', participants: [kaiId, annaId] },
+        frequency: 'monthly',
+        startDate: '2026-07-01',
+      });
+      // Anna leaves (balance is zero — nothing recorded yet).
+      await post(anna, `/api/groups/${groupId}/leave`);
+
+      bundle.recurring.tick('2026-07-01');
+      expect((await kai.get(`/api/groups/${groupId}/expenses`)).body).toHaveLength(0);
+      const activity = await kai.get(`/api/groups/${groupId}/activity`);
+      const skipped = activity.body.find((a: { kind: string }) => a.kind === 'recurring_skipped');
+      expect(skipped.payload.title).toBe('Streaming');
+
+      // The schedule kept moving — next month is still scheduled.
+      const templates = await kai.get(`/api/groups/${groupId}/recurring`);
+      expect(templates.body[0].nextDate).toBe('2026-08-01');
+    });
+  });
+
+  it('monthly stats sum expenses by category, excluding settlements and other months', async () => {
+    const categories = await kai.get(`/api/groups/${groupId}/categories`);
+    const groceries = categories.body.find((c: { name: string }) => c.name === 'Groceries').id;
+
+    const add = (title: string, amountCents: number, date: string, categoryId: number | null) =>
+      post(kai, `/api/groups/${groupId}/expenses`, {
+        title, amountCents, date, categoryId, paidBy: kaiId,
+        split: { method: 'equal', participants: [kaiId, annaId] },
+      });
+    await add('Aldi', 4000, '2026-06-03', groceries);
+    await add('Rewe', 2000, '2026-06-20', groceries);
+    await add('Mystery', 1000, '2026-06-10', null);
+    await add('May groceries', 9999, '2026-05-30', groceries); // other month
+    await post(kai, `/api/groups/${groupId}/settlements`, {
+      payerId: annaId, recipientId: kaiId, amountCents: 3500, date: '2026-06-15',
+    });
+
+    const stats = await anna.get(`/api/groups/${groupId}/stats?month=2026-06`);
+    expect(stats.status).toBe(200);
+    expect(stats.body.totalCents).toBe(7000); // settlement and May excluded
+    expect(stats.body.expenseCount).toBe(3);
+    expect(stats.body.byCategory).toEqual([
+      { categoryId: groceries, cents: 6000, count: 2 },
+      { categoryId: null, cents: 1000, count: 1 },
+    ]);
+
+    expect((await kai.get(`/api/groups/${groupId}/stats?month=junk`)).status).toBe(400);
   });
 
   it('categories are per-group, editable and removable; deletion falls back to Default', async () => {

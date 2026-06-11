@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Repeat, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import {
   useAddMember,
   useAllUsers,
@@ -9,9 +10,11 @@ import {
   useCreateCategory,
   useCreateInvite,
   useDeleteCategory,
+  useDeleteRecurring,
   useGroup,
   useLeaveGroup,
   useMe,
+  useRecurring,
   useRemoveMember,
   useRenameGroup,
   useUpdateCategory,
@@ -19,6 +22,7 @@ import {
 import { Shell } from '../components/Layout.js';
 import { CategoryIcon, IconPicker } from '../components/CategoryIcon.js';
 import { Avatar, Button, Card, ErrorText, Field, Select, Spinner, TextInput } from '../components/ui.js';
+import { formatDay, money } from '../lib/format.js';
 
 export function GroupSettingsPage() {
   const groupId = Number(useParams().groupId);
@@ -199,6 +203,8 @@ export function GroupSettingsPage() {
           )}
         </Card>
 
+        {!archived && <RecurringCard groupId={groupId} />}
+
         {!archived && <CategoriesCard groupId={groupId} />}
 
         <Card>
@@ -241,6 +247,55 @@ export function GroupSettingsPage() {
         </Card>
       </div>
     </Shell>
+  );
+}
+
+function RecurringCard({ groupId }: { groupId: number }) {
+  const { data: templates } = useRecurring(groupId);
+  const remove = useDeleteRecurring(groupId);
+
+  return (
+    <Card>
+      <h2 className="mb-3 text-sm font-semibold text-slate-600">Recurring expenses</h2>
+      {templates && templates.length > 0 ? (
+        <ul className="divide-y divide-slate-100">
+          {templates.map((template) => (
+            <li key={template.id} className="flex items-center gap-3 py-2">
+              <span className="text-slate-400">
+                <Repeat className="h-4 w-4" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{template.title}</p>
+                <p className="text-xs text-slate-400">
+                  {money(template.amountCents)} · {template.frequency === 'monthly' ? 'monthly' : 'weekly'} · next{' '}
+                  {formatDay(template.nextDate)}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label={`Delete ${template.title}`}
+                onClick={() => {
+                  if (window.confirm(`Stop "${template.title}"? Already created expenses stay.`)) {
+                    remove.mutate(template.id);
+                  }
+                }}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-slate-400">Rent, internet, subscriptions — added automatically.</p>
+      )}
+      <ErrorText>{remove.error?.message}</ErrorText>
+      <Link to={`/groups/${groupId}/recurring/new`} className="mt-3 block">
+        <Button type="button" variant="secondary" className="w-full">
+          + New recurring expense
+        </Button>
+      </Link>
+    </Card>
   );
 }
 

@@ -51,6 +51,10 @@ Dev login: first registered user needs no invite (setup mode). DB lives at
 - Expenses are soft-deleted (`deleted_at`); members who leave keep their rows
   (`left_at`) and can only leave with zero balance.
 - Every `/groups/:id/*` route requires active membership; non-members get 404.
+- Recurring templates (`recurring_expenses`) are materialized into ordinary
+  expenses by `RecurringService.tick(today)` — run at boot and hourly from
+  `index.ts`. Catch-up is capped (24/tick), short months clamp to the anchor
+  day, failures log `recurring_skipped` activity instead of stalling.
 
 ## Deploy (not yet performed — planned)
 
