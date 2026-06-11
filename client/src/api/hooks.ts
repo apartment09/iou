@@ -185,6 +185,11 @@ export const useCreateSettlement = (groupId: number) =>
     post<ExpenseDto>(`/groups/${groupId}/settlements`, input),
   );
 
+export const useUpdateSettlement = (groupId: number, expenseId: number) =>
+  useGroupMutation((input: SettlementInput) =>
+    put<ExpenseDto>(`/groups/${groupId}/settlements/${expenseId}`, input),
+  );
+
 export const useCreateCategory = (groupId: number) =>
   useGroupMutation((input: { name: string; icon: string }) =>
     post<CategoryDto>(`/groups/${groupId}/categories`, input),

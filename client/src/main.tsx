@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import './index.css';
+import { ApiError } from './api/client.js';
 import { RequireAuth } from './components/Layout.js';
 import { LoginPage } from './pages/Login.js';
 import { RegisterPage } from './pages/Register.js';
@@ -20,7 +21,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 10_000, // refetch-on-focus keeps balances fresh without spamming
-      retry: 1,
+      // Retry once on network/server hiccups, never on 4xx — those won't heal.
+      retry: (failureCount, error) =>
+        failureCount < 1 && !(error instanceof ApiError && error.status < 500),
     },
   },
 });
@@ -101,7 +104,15 @@ createRoot(document.getElementById('root')!).render(
             path="/groups/:groupId/settle"
             element={
               <RequireAuth>
-                <SettleUpPage />
+                <SettleUpPage mode="new" />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/groups/:groupId/settle/:expenseId/edit"
+            element={
+              <RequireAuth>
+                <SettleUpPage mode="edit" />
               </RequireAuth>
             }
           />

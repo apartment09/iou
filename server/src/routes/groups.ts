@@ -145,5 +145,11 @@ export function groupRoutes(deps: Deps): Router {
     res.status(201).json(expenseService.createSettlement(req.user!, req.group!, req.body as SettlementInput));
   });
 
+  group.put('/settlements/:expenseId', validate(settlementSchema), (req, res) => {
+    res.json(
+      expenseService.updateSettlement(req.user!, req.group!, Number(req.params.expenseId), req.body as SettlementInput),
+    );
+  });
+
   return router;
 }

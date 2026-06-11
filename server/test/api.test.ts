@@ -332,6 +332,51 @@ describe('expenses, balances, settle up', () => {
     expect((await post(anna, `/api/groups/${groupId}/leave`)).status).toBe(204);
   });
 
+  it('settlements are editable; type guards keep the two edit routes apart', async () => {
+    await addEqualExpense(kai, 3000, kaiId, [kaiId, annaId, benId]);
+    const settle = await post(anna, `/api/groups/${groupId}/settlements`, {
+      payerId: annaId,
+      recipientId: kaiId,
+      amountCents: 900, // oops, typo — should have been 1000
+      date: '2026-06-11',
+    });
+    expect(settle.status).toBe(201);
+
+    const fixed = await put(anna, `/api/groups/${groupId}/settlements/${settle.body.id}`, {
+      payerId: annaId,
+      recipientId: kaiId,
+      amountCents: 1000,
+      date: '2026-06-12',
+    });
+    expect(fixed.status).toBe(200);
+    expect(fixed.body).toMatchObject({ amountCents: 1000, date: '2026-06-12', type: 'settlement' });
+
+    const balances = await kai.get(`/api/groups/${groupId}/balances`);
+    const anna2 = balances.body.members.find((m: { userId: number }) => m.userId === annaId);
+    expect(anna2.balanceCents).toBe(0);
+
+    const activity = await kai.get(`/api/groups/${groupId}/activity`);
+    expect(activity.body.map((a: { kind: string }) => a.kind)).toContain('settlement_updated');
+
+    // Editing a settlement via the expense route (and vice versa) is rejected.
+    const viaExpenseRoute = await put(kai, `/api/groups/${groupId}/expenses/${settle.body.id}`, {
+      title: 'Sneaky',
+      amountCents: 1,
+      date: '2026-06-12',
+      paidBy: kaiId,
+      split: { method: 'equal', participants: [kaiId] },
+    });
+    expect(viaExpenseRoute.status).toBe(409);
+    const expense = await addEqualExpense(kai, 500, kaiId, [kaiId]);
+    const viaSettlementRoute = await put(kai, `/api/groups/${groupId}/settlements/${expense.body.id}`, {
+      payerId: kaiId,
+      recipientId: annaId,
+      amountCents: 500,
+      date: '2026-06-12',
+    });
+    expect(viaSettlementRoute.status).toBe(409);
+  });
+
   it('validates splits: exact amounts must sum to the total, members must be active', async () => {
     const badSum = await post(kai, `/api/groups/${groupId}/expenses`, {
       title: 'Broken',

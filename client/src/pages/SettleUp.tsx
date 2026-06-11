@@ -1,36 +1,84 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { parseAmount } from '@splitt/shared';
-import { useCreateSettlement, useGroup, useMe } from '../api/hooks.js';
+import { parseAmount, type ExpenseDto, type MemberDto } from '@splitt/shared';
+import {
+  useCreateSettlement,
+  useDeleteExpense,
+  useExpense,
+  useGroup,
+  useMe,
+  useUpdateSettlement,
+} from '../api/hooks.js';
 import { Shell } from '../components/Layout.js';
 import { Button, Card, ErrorText, Field, Select, Spinner, TextInput } from '../components/ui.js';
 import { centsToInput, todayIso } from '../lib/format.js';
 
-export function SettleUpPage() {
+export function SettleUpPage({ mode }: { mode: 'new' | 'edit' }) {
   const groupId = Number(useParams().groupId);
-  const [params] = useSearchParams();
+  const expenseId = Number(useParams().expenseId);
   const { data: group } = useGroup(groupId);
   const { data: me } = useMe();
-  const settle = useCreateSettlement(groupId);
-  const navigate = useNavigate();
+  const existing = useExpense(groupId, expenseId, mode === 'edit');
 
-  const prefillAmount = Number(params.get('amount'));
-  const [payerId, setPayerId] = useState(() => Number(params.get('from')) || 0);
-  const [recipientId, setRecipientId] = useState(() => Number(params.get('to')) || 0);
-  const [amountText, setAmountText] = useState(prefillAmount > 0 ? centsToInput(prefillAmount) : '');
-  const [date, setDate] = useState(todayIso());
-  const [formError, setFormError] = useState<string | null>(null);
-
-  if (!group || !me) {
+  if (!group || !me || (mode === 'edit' && existing.isPending)) {
     return (
       <Shell title="Settle up" back="">
         <Spinner />
       </Shell>
     );
   }
-  const members = group.members.filter((m) => m.leftAt === null);
-  const payer = payerId || me.id;
+  if (mode === 'edit' && (!existing.data || existing.data.type !== 'settlement')) {
+    return (
+      <Shell title="Settle up" back={`/groups/${groupId}`}>
+        <ErrorText>Settlement not found.</ErrorText>
+      </Shell>
+    );
+  }
+
+  return (
+    <SettleForm
+      key={mode === 'edit' ? `edit-${expenseId}` : 'new'}
+      groupId={groupId}
+      mode={mode}
+      myId={me.id}
+      members={group.members.filter((m) => m.leftAt === null)}
+      existing={mode === 'edit' ? existing.data : undefined}
+    />
+  );
+}
+
+function SettleForm({
+  groupId,
+  mode,
+  myId,
+  members,
+  existing,
+}: {
+  groupId: number;
+  mode: 'new' | 'edit';
+  myId: number;
+  members: MemberDto[];
+  existing?: ExpenseDto;
+}) {
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const create = useCreateSettlement(groupId);
+  const update = useUpdateSettlement(groupId, existing?.id ?? 0);
+  const remove = useDeleteExpense(groupId);
+
+  const prefillAmount = existing?.amountCents ?? Number(params.get('amount'));
+  const [payerId, setPayerId] = useState(() => existing?.paidBy || Number(params.get('from')) || 0);
+  const [recipientId, setRecipientId] = useState(
+    () => existing?.splits[0]?.userId || Number(params.get('to')) || 0,
+  );
+  const [amountText, setAmountText] = useState(prefillAmount > 0 ? centsToInput(prefillAmount) : '');
+  const [date, setDate] = useState(existing?.date ?? todayIso());
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const payer = payerId || myId;
   const recipient = recipientId || members.find((m) => m.userId !== payer)?.userId || 0;
+  const mutation = mode === 'new' ? create : update;
+  const backTo = `/groups/${groupId}?tab=balances`;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -44,17 +92,25 @@ export function SettleUpPage() {
       return;
     }
     setFormError(null);
-    settle.mutate(
+    mutation.mutate(
       { payerId: payer, recipientId: recipient, amountCents, date },
-      { onSuccess: () => navigate(`/groups/${groupId}?tab=balances`, { replace: true }) },
+      { onSuccess: () => navigate(backTo, { replace: true }) },
     );
   };
 
+  const deleteSettlement = () => {
+    if (!existing) return;
+    if (!window.confirm('Delete this payment?')) return;
+    remove.mutate(existing.id, { onSuccess: () => navigate(backTo, { replace: true }) });
+  };
+
   return (
-    <Shell title="Settle up" back={`/groups/${groupId}?tab=balances`}>
+    <Shell title={mode === 'new' ? 'Settle up' : 'Edit payment'} back={backTo}>
       <Card>
         <p className="mb-4 text-sm text-slate-500">
-          Record a payment made outside the app — cash, bank transfer, PayPal…
+          {mode === 'new'
+            ? 'Record a payment made outside the app — cash, bank transfer, PayPal…'
+            : 'Fix the details of this recorded payment.'}
         </p>
         <form onSubmit={submit} className="space-y-4">
           <Field label="Who paid?">
@@ -62,7 +118,7 @@ export function SettleUpPage() {
               {members.map((m) => (
                 <option key={m.userId} value={m.userId}>
                   {m.name}
-                  {m.userId === me.id ? ' (you)' : ''}
+                  {m.userId === myId ? ' (you)' : ''}
                 </option>
               ))}
             </Select>
@@ -72,7 +128,7 @@ export function SettleUpPage() {
               {members.map((m) => (
                 <option key={m.userId} value={m.userId}>
                   {m.name}
-                  {m.userId === me.id ? ' (you)' : ''}
+                  {m.userId === myId ? ' (you)' : ''}
                 </option>
               ))}
             </Select>
@@ -91,10 +147,21 @@ export function SettleUpPage() {
               <TextInput type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
           </div>
-          <ErrorText>{formError ?? settle.error?.message}</ErrorText>
-          <Button type="submit" className="w-full" disabled={settle.isPending}>
-            {settle.isPending ? 'Recording…' : 'Record payment'}
+          <ErrorText>{formError ?? mutation.error?.message ?? remove.error?.message}</ErrorText>
+          <Button type="submit" className="w-full" disabled={mutation.isPending}>
+            {mutation.isPending ? 'Saving…' : mode === 'new' ? 'Record payment' : 'Save changes'}
           </Button>
+          {mode === 'edit' && (
+            <Button
+              type="button"
+              variant="danger"
+              className="w-full"
+              onClick={deleteSettlement}
+              disabled={remove.isPending}
+            >
+              Delete payment
+            </Button>
+          )}
         </form>
       </Card>
     </Shell>

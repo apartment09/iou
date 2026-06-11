@@ -172,9 +172,12 @@ function ExpenseRow({
     </div>
   );
 
-  if (isSettlement || group.archivedAt) return body;
+  if (group.archivedAt) return body;
+  const editUrl = isSettlement
+    ? `/groups/${group.id}/settle/${expense.id}/edit`
+    : `/groups/${group.id}/expenses/${expense.id}/edit`;
   return (
-    <Link to={`/groups/${group.id}/expenses/${expense.id}/edit`} className="block hover:bg-slate-50">
+    <Link to={editUrl} className="block hover:bg-slate-50">
       {body}
     </Link>
   );
@@ -278,6 +281,8 @@ function activityText(entry: ActivityDto): string {
       return `${entry.actorName} deleted "${p.title}" (${amount})`;
     case 'settlement_added':
       return `${entry.actorName} recorded a payment of ${amount}`;
+    case 'settlement_updated':
+      return `${entry.actorName} edited a payment (${amount})`;
     case 'settlement_deleted':
       return `${entry.actorName} deleted a payment of ${amount}`;
     case 'member_joined':

@@ -47,7 +47,7 @@ export class ExpenseService {
   updateExpense(actor: UserDto, group: GroupRow, expenseId: number, input: ExpenseInput): ExpenseDto {
     const existing = this.get(group.id, expenseId);
     if (existing.type !== 'expense') {
-      throw conflict('Settlements cannot be edited — delete and re-record instead');
+      throw conflict('This is a settlement — edit it via the settle-up form');
     }
     const { write, splits } = this.prepare(group, input);
     this.db.transaction(() => {
@@ -58,6 +58,35 @@ export class ExpenseService {
   }
 
   createSettlement(actor: UserDto, group: GroupRow, input: SettlementInput): ExpenseDto {
+    const { write, splits } = this.prepareSettlement(group, input);
+    const id = this.db.transaction(() => {
+      const expenseId = this.expenses.create(write, splits, actor.id, nowIso());
+      this.activity.add(
+        group.id, actor.id, 'settlement_added', expenseId,
+        { amountCents: input.amountCents, from: input.payerId, to: input.recipientId }, nowIso(),
+      );
+      return expenseId;
+    })();
+    return this.expenses.findById(id)!;
+  }
+
+  updateSettlement(actor: UserDto, group: GroupRow, expenseId: number, input: SettlementInput): ExpenseDto {
+    const existing = this.get(group.id, expenseId);
+    if (existing.type !== 'settlement') {
+      throw conflict('This is an expense — edit it via the expense form');
+    }
+    const { write, splits } = this.prepareSettlement(group, input);
+    this.db.transaction(() => {
+      this.expenses.update(expenseId, write, splits, nowIso());
+      this.activity.add(
+        group.id, actor.id, 'settlement_updated', expenseId,
+        { amountCents: input.amountCents, from: input.payerId, to: input.recipientId }, nowIso(),
+      );
+    })();
+    return this.expenses.findById(expenseId)!;
+  }
+
+  private prepareSettlement(group: GroupRow, input: SettlementInput) {
     this.requireNotArchived(group);
     this.requireActiveMembers(group.id, [input.payerId, input.recipientId]);
     this.requireRealDate(input.date);
@@ -75,15 +104,7 @@ export class ExpenseService {
       notes: input.notes ?? null,
     };
     const splits = [{ userId: input.recipientId, cents: input.amountCents }];
-    const id = this.db.transaction(() => {
-      const expenseId = this.expenses.create(write, splits, actor.id, nowIso());
-      this.activity.add(
-        group.id, actor.id, 'settlement_added', expenseId,
-        { amountCents: input.amountCents, from: input.payerId, to: input.recipientId }, nowIso(),
-      );
-      return expenseId;
-    })();
-    return this.expenses.findById(id)!;
+    return { write, splits };
   }
 
   remove(actor: UserDto, group: GroupRow, expenseId: number): void {
