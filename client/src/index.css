@@ -61,13 +61,6 @@
   --color-warn-soft: var(--t-warn-soft);
 }
 
-html {
-  /* Keep focused inputs clear of the sticky top bar and the mobile tab bar
-   * when the browser scrolls them into view (e.g. when the keyboard opens). */
-  scroll-padding-top: 4.5rem;
-  scroll-padding-bottom: 6rem;
-}
-
 body {
   @apply bg-app text-ink antialiased;
   /* No scroll chaining / rubber-band fighting with sticky chrome. */

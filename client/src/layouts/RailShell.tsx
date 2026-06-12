@@ -9,14 +9,17 @@ import type { ShellProps } from './types.js';
 
 /** "The Rail": persistent left rail (desktop), icon rail (tablet), bottom
  * tab bar (mobile). Content column with a sticky top bar. */
+/** The shell is a fixed app frame (header / scroller / tab bar) instead of a
+ * scrolling document: the page itself never scrolls, so mobile browsers never
+ * animate their URL bar and fixed chrome never lags behind the viewport. */
 export function RailShell({ title, back, actions, children }: ShellProps) {
   const navigate = useNavigate();
   return (
-    <div className="min-h-dvh md:pl-16 lg:pl-60">
+    <div className="flex h-dvh flex-col md:pl-16 lg:pl-60">
       <Rail />
 
-      <header className="sticky top-0 z-10 border-b border-edge bg-app/90 backdrop-blur">
-        <div className="mx-auto flex h-13 max-w-5xl items-center gap-2 px-4 py-2.5">
+      <header className="shrink-0 border-b border-edge bg-app">
+        <div className="mx-auto flex h-13 w-full max-w-5xl items-center gap-2 px-4 py-2.5">
           {back !== undefined && (
             <button
               onClick={() => (back === '' ? navigate(-1) : navigate(back))}
@@ -33,7 +36,9 @@ export function RailShell({ title, back, actions, children }: ShellProps) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-5 pb-24 md:pb-10">{children}</main>
+      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scroll-padding-block:4rem]">
+        <div className="mx-auto w-full max-w-5xl px-4 py-5 pb-10">{children}</div>
+      </main>
 
       <MobileTabBar />
     </div>
@@ -141,7 +146,7 @@ function MobileTabBar() {
   const keyboardOpen = useKeyboardOpen();
   if (keyboardOpen) return null;
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-edge bg-surface md:hidden">
+    <nav className="flex shrink-0 border-t border-edge bg-surface md:hidden">
       <MobileTab to="/" icon={<House className="h-5 w-5" aria-hidden />} label="Groups" end />
       {me?.isAdmin && (
         <MobileTab to="/admin/users" icon={<Users className="h-5 w-5" aria-hidden />} label="Users" />
