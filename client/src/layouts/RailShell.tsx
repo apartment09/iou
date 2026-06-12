@@ -141,7 +141,7 @@ function MobileTabBar() {
   const keyboardOpen = useKeyboardOpen();
   if (keyboardOpen) return null;
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-edge bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-edge bg-surface md:hidden">
       <MobileTab to="/" icon={<House className="h-5 w-5" aria-hidden />} label="Groups" end />
       {me?.isAdmin && (
         <MobileTab to="/admin/users" icon={<Users className="h-5 w-5" aria-hidden />} label="Users" />
