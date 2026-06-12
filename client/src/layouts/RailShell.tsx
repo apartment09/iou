@@ -4,6 +4,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useGroups, useLogout, useMe } from '../api/hooks.js';
 import { Money } from '../components/ui.js';
 import { useTheme, type ThemePref } from '../lib/theme.js';
+import { useKeyboardOpen } from '../lib/viewport.js';
 import type { ShellProps } from './types.js';
 
 /** "The Rail": persistent left rail (desktop), icon rail (tablet), bottom
@@ -135,6 +136,10 @@ function RailItem({ to, icon, label }: { to: string; icon: ReactNode; label: str
 
 function MobileTabBar() {
   const { data: me } = useMe();
+  // While typing, the tab bar would ride up on top of the keyboard and bury
+  // form fields/buttons — get it out of the way entirely.
+  const keyboardOpen = useKeyboardOpen();
+  if (keyboardOpen) return null;
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 flex border-t border-edge bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
       <MobileTab to="/" icon={<House className="h-5 w-5" aria-hidden />} label="Groups" end />

@@ -175,7 +175,7 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
                   placeholder="0.00"
                   value={exact[member.userId] ?? ''}
                   onChange={(e) => setExactFor(member.userId, e.target.value)}
-                  className="w-24 rounded-lg border border-edge px-2 py-1.5 text-right text-sm outline-none focus:border-accent"
+                  className="w-24 rounded-lg border border-edge px-2 py-1.5 text-right text-base sm:text-sm outline-none focus:border-accent"
                 />
               )}
               {method === 'percentage' && (
@@ -185,7 +185,7 @@ export function SplitEditor({ members, totalCents, value, onChange }: Props) {
                     placeholder="0"
                     value={percents[member.userId] ?? ''}
                     onChange={(e) => setPercentFor(member.userId, e.target.value)}
-                    className="w-16 rounded-lg border border-edge px-2 py-1.5 text-right text-sm outline-none focus:border-accent"
+                    className="w-16 rounded-lg border border-edge px-2 py-1.5 text-right text-base sm:text-sm outline-none focus:border-accent"
                   />
                   <span className="text-sm text-faint">%</span>
                 </span>

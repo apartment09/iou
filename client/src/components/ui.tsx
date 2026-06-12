@@ -30,8 +30,9 @@ export function Field({ label, children }: { label: string; children: ReactNode 
   );
 }
 
+// 16px on touch devices — anything smaller makes iOS zoom-jump on focus.
 const inputClass =
-  'w-full rounded-md border border-edge bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-faint focus:border-accent focus:ring-2 focus:ring-accent/25';
+  'w-full rounded-md border border-edge bg-surface px-3 py-2 text-base sm:text-sm text-ink outline-none placeholder:text-faint focus:border-accent focus:ring-2 focus:ring-accent/25';
 
 export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={inputClass} {...props} />;
